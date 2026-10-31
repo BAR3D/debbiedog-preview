@@ -63,7 +63,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/4038eaf0bf38e2c075d278fc9282491e.css" />
+<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/bd8fcffaf2c7e8a140994bb14bd5acaf.css" />
 
 
 
@@ -985,7 +985,25 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 	function rand(i, k) { return Math.abs((Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1); }
 
-	/* ---------- 1. Évszakos hangulat-réteg: kevés, lassú részecske a bemutatkozó oldalakon ---------- */
+	/* A hangulat-réteg a tartalom mögött van: ehhez az oldal krém hátterével azonos színű szakaszok (fix/ragadós elemek kivételével)
+	   átlátszóvá válnak. Látványra semmi nem változik, a kártyák, képek és a fejléc/lábléc saját háttere megmarad. */
+	function clearBackdrops() {
+		var main = d.querySelector('main.site-main, #main');
+		if (!main) { return; }
+
+		var bg = w.getComputedStyle(d.body).backgroundColor;
+		if (!bg || bg === 'transparent' || /^rgba\(.*,\s*0\)$/.test(bg)) { return; }
+
+		var list = main.querySelectorAll('div, section, article, aside'), max = Math.min(list.length, 1500);
+		for (var i = 0; i < max; i++) {
+			var cs = w.getComputedStyle(list[i]);
+			if (cs.backgroundColor === bg && cs.backgroundImage === 'none' && /^(static|relative)$/.test(cs.position)) {
+				list[i].classList.add('dd-clear');
+			}
+		}
+	}
+
+	/* ---------- 1. Évszakos hangulat-réteg: lassú, jól látható részecskék és fény a bemutatkozó oldalak háttérében ---------- */
 	function ambient() {
 		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-ambient')) { return; }
 
@@ -997,14 +1015,17 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 		box.className = 'dd-ambient';
 		box.setAttribute('aria-hidden', 'true');
 
-		var n = w.innerWidth < 700 ? 9 : 14, out = '';
+		var n = w.innerWidth < 700 ? 12 : 20, out = '';
 		for (var i = 0; i < n; i++) {
 			var t = (3.6 + rand(i, 3) * 2.8).toFixed(1);
 			out += '<i class="dd-p" style="--x:' + (rand(i, 1) * 96 + 2).toFixed(1) + '%;--s:' + (8 + Math.round(rand(i, 2) * 10)) +
-				'px;--t:' + t + 's;--d:-' + (rand(i, 4) * t * 3.2).toFixed(1) + 's;--dx:' + Math.round((rand(i, 5) - 0.5) * 14) + 'vw"></i>';
+				'px;--t:' + t + 's;--d:-' + (rand(i, 4) * t * 3.4).toFixed(1) + 's;--dx:' + Math.round((rand(i, 5) - 0.5) * 14) + 'vw"></i>';
 		}
 		box.innerHTML = out;
 		d.body.appendChild(box);
+
+		clearBackdrops();
+		h.classList.add('dd-ambient-on');
 
 		// Ha a lap nem látszik, a részecskék megállnak (nem pazarolunk energiát)
 		d.addEventListener('visibilitychange', function () {
@@ -1109,5 +1130,5 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 11:18:02 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 20:55:35 -->
 <!-- QUIC.cloud CCSS in queue -->
