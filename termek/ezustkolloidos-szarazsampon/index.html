@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="hu">
+<html lang="hu" data-season="autumn">
 <head>
 	
 	<meta charset="UTF-8">
@@ -37,14 +37,39 @@
 
 
 
-
+<script id="dd-season" data-no-optimize="1" data-cfasync="false">
+(function () {
+	var d = document.documentElement, w = window, s = null;
+	try {
+		var m = /[?&]season=(spring|summer|autumn|winter)\b/.exec(w.location.search);
+		if (m) { s = m[1]; w.sessionStorage.setItem('ddSeason', s); } else { s = w.sessionStorage.getItem('ddSeason'); }
+	} catch (e) {}
+	if (s && /^(spring|summer|autumn|winter)$/.test(s)) { d.setAttribute('data-season', s); }
+	// Csökkentett mozgás: a rendszer-beállítás az irányadó (nincs betöltő, nincs részecske, nincs animáció).
+	// Kipróbáláshoz ?motion=on (és ?motion=off a visszavonáshoz) felülírja, a böngésző-munkamenet végéig.
+	var force = false;
+	try {
+		var mm = /[?&]motion=(on|off)\b/.exec(w.location.search);
+		if (mm) { if (mm[1] === 'on') { w.sessionStorage.setItem('ddMotion', 'on'); } else { w.sessionStorage.removeItem('ddMotion'); } }
+		force = w.sessionStorage.getItem('ddMotion') === 'on';
+	} catch (e) {}
+	var reduce = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
+	if (force) { d.classList.add('dd-force-motion'); reduce = false; }
+	if (reduce) { d.classList.add('dd-reduce'); }
+	if (!d.hasAttribute('data-dd-intro') || reduce) { return; }
+	var seen = true, replay = /[?&]loader=1\b/.test(w.location.search);
+	try { seen = !!w.sessionStorage.getItem('ddSeen'); w.sessionStorage.setItem('ddSeen', '1'); } catch (e) {}
+	if (!seen || replay) { d.classList.add('dd-loading'); }
+})();
+</script>
+	
 
 
 <style id='wp-img-auto-sizes-contain-inline-css'>
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../../wp-content/litespeed/css/d30d9479ee4135460caf54fc223cf394.css" />
+<link data-optimized="2" rel="stylesheet" href="../../wp-content/litespeed/css/82c9e964c502e6ee61d4506dc122db6d.css" />
 
 
 
@@ -89,6 +114,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 --wvs-selected-item-text-color:#000000}
 
 </style>
+
 
 
 
@@ -502,10 +528,10 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 	<form class="cart" action="#" method="get">
 		<input name="woobt_ids" class="woobt-ids woobt-ids-1274" data-id="1274" type="hidden"/>
 		<div class="ct-cart-actions"><div class="quantity" data-type="type-2">
-	<span class="ct-increase"></span><span class="ct-decrease"></span>	<label class="screen-reader-text" for="quantity_6ae5a048d24c8">Ezüstkolloidos Szárazsampon mennyiség</label>
+	<span class="ct-increase"></span><span class="ct-decrease"></span>	<label class="screen-reader-text" for="quantity_6ae5bf8fe2add">Ezüstkolloidos Szárazsampon mennyiség</label>
 	<input
 		type="number"
-				id="quantity_6ae5a048d24c8"
+				id="quantity_6ae5bf8fe2add"
 		class="input-text qty text"
 		name="quantity"
 		value="1"
@@ -668,72 +694,50 @@ A terméket kifejezetten kutyák, macskák, nyulak és lovak pH-értékére terv
 				<ul class="products columns-4" data-products="type-1">
 
 			
-					<li class="product type-product post-727 status-publish first instock product_cat-natur-kutyakozmetikum product_tag-always-your-friend product_tag-natur-kutyakozmetikum has-post-thumbnail shipping-taxable purchasable product-type-simple">
-	<figure ><a class="ct-media-container" href="#" aria-label="Relaxáló Spray"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Relaxalo_Spray">
-<source type="image/webp" srcset="../../wp-content/uploads/2019/07/Relaxalo_Spray-300x300.jpg.webp 300w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-100x100.jpg.webp 100w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-600x600.jpg.webp 600w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-64x64.jpg.webp 64w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-150x150.jpg.webp 150w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-768x768.jpg.webp 768w, ../../wp-content/uploads/2019/07/Relaxalo_Spray.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../wp-content/uploads/2019/07/Relaxalo_Spray-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2019/07/Relaxalo_Spray-300x300.jpg 300w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-100x100.jpg 100w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-600x600.jpg 600w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-64x64.jpg 64w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-150x150.jpg 150w, ../../wp-content/uploads/2019/07/Relaxalo_Spray-768x768.jpg 768w, ../../wp-content/uploads/2019/07/Relaxalo_Spray.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Relaxáló Spray"/>
+					<li class="product type-product post-1416 status-publish first instock product_cat-kutyasampon product_tag-always-your-friend product_tag-kutyasampon has-post-thumbnail shipping-taxable purchasable product-type-simple">
+	<figure ><a class="ct-media-container" href="#" aria-label="Organic Brightness 1:20 Koncentrált Kutyasampon"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Organic_Brightness_Sampon">
+<source type="image/webp" srcset="../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-300x300.jpg.webp 300w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-100x100.jpg.webp 100w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-600x600.jpg.webp 600w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-64x64.jpg.webp 64w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-150x150.jpg.webp 150w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-768x768.jpg.webp 768w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img width="300" height="300" src="../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-300x300.jpg 300w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-100x100.jpg 100w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-600x600.jpg 600w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-64x64.jpg 64w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-150x150.jpg 150w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon-768x768.jpg 768w, ../../wp-content/uploads/2019/07/Organic_Brightness_Sampon.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Organic Brightness 1:20 Koncentrált Kutyasampon"/>
 </picture>
-</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="#" target="_self">Relaxáló Spray</a></h2>
-	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>6 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
-<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/natur-kutyakozmetikum/index.html" rel="tag" class="ct-term-15">Kutyaápolás</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_727" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="727" data-product_sku="00077" aria-label="Kosárba: &ldquo;Relaxáló Spray&rdquo;" rel="nofollow" data-success_message="&ldquo;Relaxáló Spray&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_727" class="screen-reader-text">
+</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="#" target="_self">Organic Brightness 1:20 Koncentrált Kutyasampon</a></h2>
+	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>8 790&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
+<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/kutyasampon/index.html" rel="tag" class="ct-term-43">Kutyasampon</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_1416" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="1416" data-product_sku="00066" aria-label="Kosárba: &ldquo;Organic Brightness 1:20 Koncentrált Kutyasampon&rdquo;" rel="nofollow" data-success_message="&ldquo;Organic Brightness 1:20 Koncentrált Kutyasampon&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_1416" class="screen-reader-text">
 			</span>
 </div></li>
 
 			
-					<li class="product type-product post-8187 status-publish instock product_cat-natur-kutyakozmetikum product_tag-always-your-friend product_tag-ezustkolloid product_tag-natur-kutyakozmetikum product_tag-szemkornyekapolo has-post-thumbnail shipping-taxable purchasable product-type-simple">
-	<figure ><a class="ct-media-container" href="#" aria-label="Ezüstkolloidos Szemkörnyékápoló"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Eye Care Tear Stain Cleanser-min">
-<source type="image/webp" srcset="../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-300x300.jpg.webp 300w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-100x100.jpg.webp 100w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-600x600.jpg.webp 600w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-64x64.jpg.webp 64w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-150x150.jpg.webp 150w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-768x768.jpg.webp 768w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-50x50.jpg.webp 50w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-300x300.jpg 300w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-100x100.jpg 100w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-600x600.jpg 600w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-64x64.jpg 64w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-150x150.jpg 150w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-768x768.jpg 768w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-50x50.jpg 50w, ../../wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Ezüstkolloidos Szemkörnyékápoló"/>
+					<li class="product type-product post-1418 status-publish instock product_cat-natur-kutyakozmetikum product_cat-kutyasampon product_tag-always-your-friend has-post-thumbnail shipping-taxable purchasable product-type-simple">
+	<figure ><a class="ct-media-container" href="../rejuvenation-fiatalito-kondicionalo/index.html" aria-label="Rejuvenation - 1:10 Koncentrált Fiatalító Kondícionáló"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Fiatalito_Kondicionalo">
+<source type="image/webp" srcset="../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-300x300.jpg.webp 300w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-100x100.jpg.webp 100w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-600x600.jpg.webp 600w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-64x64.jpg.webp 64w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-150x150.jpg.webp 150w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-768x768.jpg.webp 768w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img width="300" height="300" src="../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-300x300.jpg 300w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-100x100.jpg 100w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-600x600.jpg 600w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-64x64.jpg 64w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-150x150.jpg 150w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo-768x768.jpg 768w, ../../wp-content/uploads/2019/07/Fiatalito_Kondicionalo.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Rejuvenation - 1:10 Koncentrált Fiatalító Kondícionáló"/>
 </picture>
-</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="#" target="_self">Ezüstkolloidos Szemkörnyékápoló</a></h2>
-	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>6 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
-<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/natur-kutyakozmetikum/index.html" rel="tag" class="ct-term-15">Kutyaápolás</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_8187" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="8187" data-product_sku="00023" aria-label="Kosárba: &ldquo;Ezüstkolloidos Szemkörnyékápoló&rdquo;" rel="nofollow" data-success_message="&ldquo;Ezüstkolloidos Szemkörnyékápoló&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_8187" class="screen-reader-text">
+</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../rejuvenation-fiatalito-kondicionalo/index.html" target="_self">Rejuvenation &#8211; 1:10 Koncentrált Fiatalító Kondícionáló</a></h2>
+	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>9 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
+<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/natur-kutyakozmetikum/index.html" rel="tag" class="ct-term-15">Kutyaápolás</a>, <a href="../../termekkategoria/kutyasampon/index.html" rel="tag" class="ct-term-43">Kutyasampon</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_1418" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="1418" data-product_sku="00075" aria-label="Kosárba: &ldquo;Rejuvenation - 1:10 Koncentrált Fiatalító Kondícionáló&rdquo;" rel="nofollow" data-success_message="&ldquo;Rejuvenation - 1:10 Koncentrált Fiatalító Kondícionáló&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_1418" class="screen-reader-text">
 			</span>
 </div></li>
 
 			
-					<li class="wvs-archive-product-wrapper product type-product post-1638 status-publish instock product_cat-natur-kutyakozmetikum product_tag-always-your-friend product_tag-dezodor product_tag-natur-kutyakozmetikum has-post-thumbnail shipping-taxable purchasable product-type-variable has-default-attributes thumbs-bottom">
-	<figure ><a class="ct-media-container" href="../kifesulo-es-helyreallito-spray/index.html" aria-label="Kifésülő és Helyreállító Spray"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Wonder Spray Detangler 75ml">
-<source type="image/webp" srcset="../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-300x300.jpg.webp 300w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-100x100.jpg.webp 100w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-600x600.jpg.webp 600w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-64x64.jpg.webp 64w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-150x150.jpg.webp 150w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-768x768.jpg.webp 768w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-50x50.jpg.webp 50w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-300x300.jpg 300w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-100x100.jpg 100w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-600x600.jpg 600w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-64x64.jpg 64w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-150x150.jpg 150w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-768x768.jpg 768w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml-50x50.jpg 50w, ../../wp-content/uploads/2024/03/Wonder-Spray-Detangler-75ml.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Kifésülő és Helyreállító Spray"/>
+					<li class="product type-product post-729 status-publish instock product_cat-natur-kutyakozmetikum product_tag-always-your-friend product_tag-natur-kutyakozmetikum has-post-thumbnail shipping-taxable purchasable product-type-simple">
+	<figure ><a class="ct-media-container" href="../mancs-es-orr-balzsam/index.html" aria-label="Mancs és Orr balzsam"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Mancs_Es_Orr_Apolo">
+<source type="image/webp" srcset="../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-300x300.jpg.webp 300w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-100x100.jpg.webp 100w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-600x600.jpg.webp 600w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-64x64.jpg.webp 64w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-150x150.jpg.webp 150w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-768x768.jpg.webp 768w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img width="300" height="300" src="../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-300x300.jpg 300w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-100x100.jpg 100w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-600x600.jpg 600w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-64x64.jpg 64w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-150x150.jpg 150w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo-768x768.jpg 768w, ../../wp-content/uploads/2019/07/Mancs_Es_Orr_Apolo.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Mancs és Orr balzsam"/>
 </picture>
-</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../kifesulo-es-helyreallito-spray/index.html" target="_self">Kifésülő és Helyreállító Spray</a></h2>
-	<span class="price"><span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>7 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>21 790&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span><span class="screen-reader-text">Ártartomány: 7 990&nbsp;&#70;&#116; - 21 790&nbsp;&#70;&#116;</span></span>
-<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/natur-kutyakozmetikum/index.html" rel="tag" class="ct-term-15">Kutyaápolás</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="../kifesulo-es-helyreallito-spray/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_1638" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="1638" data-product_sku="" aria-label="Válasszunk &ldquo;Kifésülő és Helyreállító Spray&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_1638" class="screen-reader-text">
-		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
-</div>
-	<div class="wvs-archive-variations-wrapper" data-threshold_min="0" data-threshold_max="100" data-total_children="2"  data-total_attribute="1" data-product_id="1638" data-product_variations="false">
-
-		
-					<ul class="variations">
-				
-					
-
-						<li class="woo-variation-items-wrapper">
-						<select style="display:none" id="pa_mililiter-1638" class=" woo-variation-raw-select" name="attribute_pa_mililiter" data-attribute_name="attribute_pa_mililiter" data-show_option_none="yes"><option value="">Válassz egy lehetőséget</option><option value="300-ml" >300 ml</option><option value="75-ml"  selected='selected'>75 ml</option></select><ul role="radiogroup" aria-label="ml" class="archive-variable-items wvs-style-squared variable-items-wrapper button-variable-items-wrapper" data-attribute_name="attribute_pa_mililiter" data-attribute_values="[&quot;300-ml&quot;,&quot;75-ml&quot;]"><li aria-checked="false" tabindex="0" data-attribute_name="attribute_pa_mililiter" data-wvstooltip="300 ml" class="variable-item button-variable-item button-variable-item-300-ml " title="300 ml" data-title="300 ml" data-value="300-ml" role="radio" tabindex="0"><div class="variable-item-contents"><span class="variable-item-span variable-item-span-button">300 ml</span></div></li><li aria-checked="true" tabindex="0" data-attribute_name="attribute_pa_mililiter" data-wvstooltip="75 ml" class="variable-item button-variable-item button-variable-item-75-ml selected" title="75 ml" data-title="75 ml" data-value="75-ml" role="radio" tabindex="0"><div class="variable-item-contents"><span class="variable-item-span variable-item-span-button">75 ml</span></div></li></ul>						</li>
-					
-									<li class="wvs_archive_reset_variations">
-						<a class="wvs_archive_reset_variations_link" href="#">Clear</a>
-					</li>
-				
-							</ul>
-
-			<div class="wvs-archive-information"></div>
-
-		
-			</div>
-
-</li>
+</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../mancs-es-orr-balzsam/index.html" target="_self">Mancs és Orr balzsam</a></h2>
+	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>7 790&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
+<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/natur-kutyakozmetikum/index.html" rel="tag" class="ct-term-15">Kutyaápolás</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_729" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="729" data-product_sku="00049" aria-label="Kosárba: &ldquo;Mancs és Orr balzsam&rdquo;" rel="nofollow" data-success_message="&ldquo;Mancs és Orr balzsam&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_729" class="screen-reader-text">
+			</span>
+</div></li>
 
 			
-					<li class="product type-product post-10012 status-publish last instock product_cat-kutyasampon product_tag-always-your-friend product_tag-ezustkolloid product_tag-kutyasampon has-post-thumbnail shipping-taxable purchasable product-type-simple">
-	<figure ><a class="ct-media-container" href="#" aria-label="Ezüstkolloidos Kutyasampon Érzékeny Bőrre"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Ezüstkolloidos Sampon Érzékeny Bőrre">
-<source type="image/webp" srcset="../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-300x300.jpg.webp 300w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-100x100.jpg.webp 100w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-600x600.jpg.webp 600w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-64x64.jpg.webp 64w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-150x150.jpg.webp 150w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-768x768.jpg.webp 768w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-50x50.jpg.webp 50w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-300x300.jpg" alt="Ezüstkolloidos Sampon Érzékeny Bőrre" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-300x300.jpg 300w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-100x100.jpg 100w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-600x600.jpg 600w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-64x64.jpg 64w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-150x150.jpg 150w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-768x768.jpg 768w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-50x50.jpg 50w, ../../wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
+					<li class="product type-product post-4204 status-publish last instock product_cat-gazdiknak product_cat-kiegeszitok product_tag-always-your-friend has-post-thumbnail shipping-taxable purchasable product-type-simple">
+	<figure ><a class="ct-media-container" href="#" aria-label="Always Your Friend Pamutzsák"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Pouch">
+<source type="image/webp" srcset="../../wp-content/uploads/2020/04/Pouch-300x300.jpg.webp 300w, ../../wp-content/uploads/2020/04/Pouch-100x100.jpg.webp 100w, ../../wp-content/uploads/2020/04/Pouch-600x600.jpg.webp 600w, ../../wp-content/uploads/2020/04/Pouch-64x64.jpg.webp 64w, ../../wp-content/uploads/2020/04/Pouch-150x150.jpg.webp 150w, ../../wp-content/uploads/2020/04/Pouch-768x768.jpg.webp 768w, ../../wp-content/uploads/2020/04/Pouch.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img width="300" height="300" src="../../wp-content/uploads/2020/04/Pouch-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2020/04/Pouch-300x300.jpg 300w, ../../wp-content/uploads/2020/04/Pouch-100x100.jpg 100w, ../../wp-content/uploads/2020/04/Pouch-600x600.jpg 600w, ../../wp-content/uploads/2020/04/Pouch-64x64.jpg 64w, ../../wp-content/uploads/2020/04/Pouch-150x150.jpg 150w, ../../wp-content/uploads/2020/04/Pouch-768x768.jpg 768w, ../../wp-content/uploads/2020/04/Pouch.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Always Your Friend Pamutzsák"/>
 </picture>
-</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="#" target="_self">Ezüstkolloidos Kutyasampon Érzékeny Bőrre</a></h2>
-	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>5 890&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
-<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/kutyasampon/index.html" rel="tag" class="ct-term-43">Kutyasampon</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10012" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="10012" data-product_sku="00070-1" aria-label="Kosárba: &ldquo;Ezüstkolloidos Kutyasampon Érzékeny Bőrre&rdquo;" rel="nofollow" data-success_message="&ldquo;Ezüstkolloidos Kutyasampon Érzékeny Bőrre&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10012" class="screen-reader-text">
+</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="#" target="_self">Always Your Friend Pamutzsák</a></h2>
+	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
+<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/gazdiknak/index.html" rel="tag" class="ct-term-111">Gazdiknak</a>, <a href="../../termekkategoria/kiegeszitok/index.html" rel="tag" class="ct-term-48">Kiegészítők</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_4204" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="4204" data-product_sku="00002" aria-label="Kosárba: &ldquo;Always Your Friend Pamutzsák&rdquo;" rel="nofollow" data-success_message="&ldquo;Always Your Friend Pamutzsák&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_4204" class="screen-reader-text">
 			</span>
 </div></li>
 
@@ -1029,9 +1033,243 @@ A terméket kifejezetten kutyák, macskák, nyulak és lovak pH-értékére terv
   });
 })();
 </script>
+<script id="dd-motion">
+/* Finom mozgás: évszakos hangulat-réteg, görgetéses megjelenés, kosár-jelzés.
+   Nem küld hálózati kérést, nem tárol személyes adatot (csak a böngésző sessionStorage-ában az évszak-kipróbálást).
+   Csökkentett mozgásnál (prefers-reduced-motion) semmit nem csinál. */
+(function () {
+	'use strict';
+
+	var d = document, h = d.documentElement, w = window;
+	// A fejléc-szkript (inc/seasons.php) dönt: .dd-reduce = csökkentett mozgás, .dd-force-motion = kipróbálási mód
+	var reduce = h.classList.contains('dd-reduce');
+
+	// Nyilvános segéd: évszak váltása (kipróbáláshoz) és a betöltő újrajátszása
+	w.DDMotion = {
+		season: function (s) {
+			if (!/^(spring|summer|autumn|winter)$/.test(s)) { return; }
+			h.setAttribute('data-season', s);
+			try { w.sessionStorage.setItem('ddSeason', s); } catch (e) {}
+		},
+		replay: function (url) {
+			try { w.sessionStorage.removeItem('ddSeen'); } catch (e) {}
+			w.location.href = url || (w.location.pathname + '?loader=1');
+		}
+	};
+
+	if (reduce) { return; }
+
+	function rand(i, k) { return Math.abs((Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1); }
+
+	/* ---------- 1. Évszakos hangulat-réteg: kevés, lassú részecske a bemutatkozó oldalakon ---------- */
+	function ambient() {
+		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-ambient')) { return; }
+
+		var conn = navigator.connection;
+		if (conn && conn.saveData) { return; }
+		if (navigator.deviceMemory && navigator.deviceMemory <= 2) { return; }
+
+		var box = d.createElement('div');
+		box.className = 'dd-ambient';
+		box.setAttribute('aria-hidden', 'true');
+
+		var n = w.innerWidth < 700 ? 9 : 14, out = '';
+		for (var i = 0; i < n; i++) {
+			var t = (3.6 + rand(i, 3) * 2.8).toFixed(1);
+			out += '<i class="dd-p" style="--x:' + (rand(i, 1) * 96 + 2).toFixed(1) + '%;--s:' + (8 + Math.round(rand(i, 2) * 10)) +
+				'px;--t:' + t + 's;--d:-' + (rand(i, 4) * t * 3.2).toFixed(1) + 's;--dx:' + Math.round((rand(i, 5) - 0.5) * 14) + 'vw"></i>';
+		}
+		box.innerHTML = out;
+		d.body.appendChild(box);
+
+		// Ha a lap nem látszik, a részecskék megállnak (nem pazarolunk energiát)
+		d.addEventListener('visibilitychange', function () {
+			box.classList.toggle('dd-paused', d.hidden);
+		});
+	}
+
+	/* ---------- 2. Görgetéses megjelenés: csak a képernyőn kívüli elemekre ---------- */
+	var TARGETS = [
+		'.trust-bar__item',
+		'.category-cards__card',
+		'.bestsellers-section .wc-block-product',
+		'.why-section .wp-block-column',
+		'.brands-section .wp-block-image',
+		'ul.products > li.product',
+		'[data-products] > .product',
+		'.entry-card'
+	].join(',');
+
+	function reveal() {
+		if (!('IntersectionObserver' in w)) { return; }
+
+		var vh = w.innerHeight || h.clientHeight, list = [];
+		[].forEach.call(d.querySelectorAll(TARGETS), function (el) {
+			var r = el.getBoundingClientRect();
+			if (r.top > vh * 0.96) { list.push(el); }
+		});
+		if (!list.length) { return; }
+
+		var io = new IntersectionObserver(function (entries) {
+			var k = 0;
+			entries.forEach(function (e) {
+				if (!e.isIntersecting) { return; }
+				e.target.style.setProperty('--dd-delay', Math.min(k, 4) * 0.08 + 's');
+				k++;
+				e.target.classList.add('dd-in');
+				io.unobserve(e.target);
+			});
+		}, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+		list.forEach(function (el) { el.classList.add('dd-reveal'); io.observe(el); });
+
+		// Védőháló: ha valamiért nem futna le, minden elem megjelenik
+		setTimeout(function () {
+			[].forEach.call(d.querySelectorAll('.dd-reveal:not(.dd-in)'), function (el) { el.classList.add('dd-in'); });
+		}, 9000);
+	}
+
+	/* ---------- 3. Kosár-számláló megugrik kosárba tételkor ---------- */
+	function cartBump() {
+		if (!w.jQuery) { return; }
+
+		w.jQuery(d.body).on('added_to_cart', function () {
+			[].forEach.call(d.querySelectorAll('.ct-dynamic-count-cart'), function (el) {
+				el.classList.remove('dd-bump');
+				void el.offsetWidth;
+				el.classList.add('dd-bump');
+			});
+		});
+	}
+
+	function start() {
+		reveal();
+		cartBump();
+
+		// A hangulat-réteg a betöltő eltűnése után indul, hogy ne terhelje az első festést
+		var go = function () { ambient(); };
+		if (h.classList.contains('dd-loading')) {
+			var iv = setInterval(function () {
+				if (!h.classList.contains('dd-loading')) { clearInterval(iv); go(); }
+			}, 250);
+		} else if ('requestIdleCallback' in w) {
+			w.requestIdleCallback(go, { timeout: 1500 });
+		} else {
+			setTimeout(go, 400);
+		}
+	}
+
+	if (d.readyState === 'loading') { d.addEventListener('DOMContentLoaded', start); } else { start(); }
+})();
+
+</script>
+<style id="dd-demo-css">body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}</style>
+<div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak és betöltő"><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="../../index.html">Betöltő újra</button><span class="dd-demo__note" id="dd-demo-note" hidden>A készüléked csökkentett mozgásra van állítva, ezért az animációk ki vannak kapcsolva. <button type="button" data-force>Animációk megmutatása</button></span></div>
+<script id="dd-demo-js">
+(function () {
+  var d = document, h = d.documentElement, bar = d.getElementById('dd-demo');
+  if (!bar) { return; }
+  function mark() { var s = h.getAttribute('data-season'); [].forEach.call(bar.querySelectorAll('[data-s]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-s') === s ? 'true' : 'false'); }); }
+  mark();
+  if (h.classList.contains('dd-reduce')) { d.getElementById('dd-demo-note').hidden = false; }
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) { return; }
+    if (b.hasAttribute('data-s')) { if (window.DDMotion) { window.DDMotion.season(b.getAttribute('data-s')); } mark(); }
+    else if (b.hasAttribute('data-replay')) { if (window.DDMotion) { window.DDMotion.replay(b.getAttribute('data-replay') + '?loader=1'); } }
+    else if (b.hasAttribute('data-force')) { try { sessionStorage.setItem('ddMotion', 'on'); } catch (x) {} location.reload(); }
+  });
+})();
+</script>
+<script id="dd-sticky-atc">
+/* Ragadós "Kosárba" sáv a termékoldalon, mobilon.
+   Akkor jelenik meg, ha az eredeti kosárba gomb már kigördült a képernyő tetején, és eltűnik, ha a lábléc látszik.
+   Nem tesz új funkciót a vásárlásba: ugyanazt az eredeti gombot kattintja (egyszerű termék), illetve a változat-
+   választóhoz görget (változatos termék, amíg nincs kiválasztva változat). Nem küld kérést, nem tárol adatot. */
+(function () {
+	'use strict';
+
+	var d = document;
+	var form = d.querySelector('form.cart');
+	var btn = form && form.querySelector('.single_add_to_cart_button');
+
+	if (!form || !btn) { return; }
+
+	var mq = window.matchMedia('(max-width: 689.98px)');
+	var titleEl = d.querySelector('.entry-summary .product_title, .product_title');
+	var bar = d.createElement('div');
+
+	bar.className = 'dd-sticky-atc';
+	bar.setAttribute('role', 'region');
+	bar.setAttribute('aria-label', 'Gyors kosárba tétel');
+	bar.hidden = true;
+	bar.innerHTML = '<div class="dd-sticky-atc__info"><span class="dd-sticky-atc__title"></span><span class="dd-sticky-atc__price"></span></div>' +
+		'<button type="button" class="dd-sticky-atc__btn"></button>';
+
+	d.body.appendChild(bar);
+
+	var tEl = bar.querySelector('.dd-sticky-atc__title');
+	var pEl = bar.querySelector('.dd-sticky-atc__price');
+	var bEl = bar.querySelector('.dd-sticky-atc__btn');
+
+	function priceText() {
+		var p = d.querySelector('.entry-summary .price');
+		if (!p) { return ''; }
+		var ins = p.querySelector('ins');
+		return (ins || p).textContent.replace(/\s+/g, ' ').trim();
+	}
+
+	function refresh() {
+		tEl.textContent = titleEl ? titleEl.textContent.trim() : '';
+		pEl.textContent = priceText();
+		bEl.textContent = btn.textContent.trim() || 'Kosárba';
+	}
+
+	var footer = d.querySelector('#footer, footer.ct-footer, .ct-footer');
+	var ticking = false;
+
+	// Görgetés-figyelő (nem IntersectionObserver): ugrásnál (horgony, lapozás, visszalépés) sem marad le az állapotváltás.
+	// Az eredeti űrlap "elgördült" = a képernyő teteje fölött van; a lábléc láthatóan eltünteti a sávot.
+	function check() {
+		ticking = false;
+		var gone = form.getBoundingClientRect().bottom < 0;
+		var fr = footer ? footer.getBoundingClientRect() : null;
+		var footerShown = !!fr && fr.top < window.innerHeight && fr.bottom > 0;
+		var show = mq.matches && gone && !footerShown;
+
+		if (show) { refresh(); }
+		bar.hidden = !show;
+		bar.classList.toggle('dd-sticky-atc--on', show);
+	}
+
+	function onScroll() {
+		if (!ticking) {
+			ticking = true;
+			window.setTimeout(check, 60);
+		}
+	}
+
+	window.addEventListener('scroll', onScroll, { passive: true });
+	window.addEventListener('resize', onScroll);
+	if (mq.addEventListener) { mq.addEventListener('change', onScroll); }
+	check();
+
+	bEl.addEventListener('click', function () {
+		var needsOptions = form.classList.contains('variations_form') && (btn.classList.contains('disabled') || btn.classList.contains('wc-variation-selection-needed'));
+
+		if (needsOptions) {
+			var calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+			form.scrollIntoView({ behavior: calm ? 'auto' : 'smooth', block: 'center' });
+			return;
+		}
+
+		btn.click();
+	});
+})();
+
+</script>
 </body>
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 09:01:14 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 11:14:41 -->
 <!-- QUIC.cloud CCSS in queue -->

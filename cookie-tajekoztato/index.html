@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="hu">
+<html lang="hu" data-season="autumn">
 <head>
 	
 	<meta charset="UTF-8">
@@ -36,13 +36,38 @@
 
 
 
-
+<script id="dd-season" data-no-optimize="1" data-cfasync="false">
+(function () {
+	var d = document.documentElement, w = window, s = null;
+	try {
+		var m = /[?&]season=(spring|summer|autumn|winter)\b/.exec(w.location.search);
+		if (m) { s = m[1]; w.sessionStorage.setItem('ddSeason', s); } else { s = w.sessionStorage.getItem('ddSeason'); }
+	} catch (e) {}
+	if (s && /^(spring|summer|autumn|winter)$/.test(s)) { d.setAttribute('data-season', s); }
+	// Csökkentett mozgás: a rendszer-beállítás az irányadó (nincs betöltő, nincs részecske, nincs animáció).
+	// Kipróbáláshoz ?motion=on (és ?motion=off a visszavonáshoz) felülírja, a böngésző-munkamenet végéig.
+	var force = false;
+	try {
+		var mm = /[?&]motion=(on|off)\b/.exec(w.location.search);
+		if (mm) { if (mm[1] === 'on') { w.sessionStorage.setItem('ddMotion', 'on'); } else { w.sessionStorage.removeItem('ddMotion'); } }
+		force = w.sessionStorage.getItem('ddMotion') === 'on';
+	} catch (e) {}
+	var reduce = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
+	if (force) { d.classList.add('dd-force-motion'); reduce = false; }
+	if (reduce) { d.classList.add('dd-reduce'); }
+	if (!d.hasAttribute('data-dd-intro') || reduce) { return; }
+	var seen = true, replay = /[?&]loader=1\b/.test(w.location.search);
+	try { seen = !!w.sessionStorage.getItem('ddSeen'); w.sessionStorage.setItem('ddSeen', '1'); } catch (e) {}
+	if (!seen || replay) { d.classList.add('dd-loading'); }
+})();
+</script>
+	
 
 <style id='wp-img-auto-sizes-contain-inline-css'>
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/e12dc191a442f649971ae42d6689563d.css" />
+<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/e64c27c2a029402a0085cc443c3b7786.css" />
 
 
 
@@ -87,6 +112,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 --wvs-selected-item-text-color:#000000}
 
 </style>
+
 
 
 
@@ -480,8 +506,8 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 		<div class="entry-content is-layout-constrained">
 			<h2>COOKIE NYILATKOZAT</h2>
 <h4 style="text-align: center;">HATÁLYOS: 2019. JANUÁR 1.</h4>
-<h4 style="text-align: center;"></h4>
-<h4 style="text-align: center;">&nbsp;</h4>
+
+
 <h2>1. MIK AZOK A COOKIE-K (SÜTIK), ÉS HOGYAN TUDOD MÓDOSÍTANI A BEÁLLÍTÁSOKAT?</h2>
 <p>A „cookie”-k (továbbiakban: „cookie” vagy „süti”) olyan kis szöveges fájlok, amelyeket egy weboldal felhasználhat arra, hogy még hatékonyabbá tegye a felhasználói élményt.</p>
 <p>Néhány “süti” csak átmeneti és eltűnik a böngésző bezárásával, míg léteznek tartós változatok is, melyek huzamosabb ideig számítógépén maradnak. A jogszabályok szerint a sütiket abban az esetben tárolhatjuk a látogató eszközén, ha erre feltétlenül szükség van a weboldalunk működése érdekében.</p>
@@ -681,6 +707,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 
 
+
     
 	<!--copyscapeskip-->
 	<!-- V1 -->
@@ -827,9 +854,157 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
   });
 })();
 </script>
+<script id="dd-motion">
+/* Finom mozgás: évszakos hangulat-réteg, görgetéses megjelenés, kosár-jelzés.
+   Nem küld hálózati kérést, nem tárol személyes adatot (csak a böngésző sessionStorage-ában az évszak-kipróbálást).
+   Csökkentett mozgásnál (prefers-reduced-motion) semmit nem csinál. */
+(function () {
+	'use strict';
+
+	var d = document, h = d.documentElement, w = window;
+	// A fejléc-szkript (inc/seasons.php) dönt: .dd-reduce = csökkentett mozgás, .dd-force-motion = kipróbálási mód
+	var reduce = h.classList.contains('dd-reduce');
+
+	// Nyilvános segéd: évszak váltása (kipróbáláshoz) és a betöltő újrajátszása
+	w.DDMotion = {
+		season: function (s) {
+			if (!/^(spring|summer|autumn|winter)$/.test(s)) { return; }
+			h.setAttribute('data-season', s);
+			try { w.sessionStorage.setItem('ddSeason', s); } catch (e) {}
+		},
+		replay: function (url) {
+			try { w.sessionStorage.removeItem('ddSeen'); } catch (e) {}
+			w.location.href = url || (w.location.pathname + '?loader=1');
+		}
+	};
+
+	if (reduce) { return; }
+
+	function rand(i, k) { return Math.abs((Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1); }
+
+	/* ---------- 1. Évszakos hangulat-réteg: kevés, lassú részecske a bemutatkozó oldalakon ---------- */
+	function ambient() {
+		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-ambient')) { return; }
+
+		var conn = navigator.connection;
+		if (conn && conn.saveData) { return; }
+		if (navigator.deviceMemory && navigator.deviceMemory <= 2) { return; }
+
+		var box = d.createElement('div');
+		box.className = 'dd-ambient';
+		box.setAttribute('aria-hidden', 'true');
+
+		var n = w.innerWidth < 700 ? 9 : 14, out = '';
+		for (var i = 0; i < n; i++) {
+			var t = (3.6 + rand(i, 3) * 2.8).toFixed(1);
+			out += '<i class="dd-p" style="--x:' + (rand(i, 1) * 96 + 2).toFixed(1) + '%;--s:' + (8 + Math.round(rand(i, 2) * 10)) +
+				'px;--t:' + t + 's;--d:-' + (rand(i, 4) * t * 3.2).toFixed(1) + 's;--dx:' + Math.round((rand(i, 5) - 0.5) * 14) + 'vw"></i>';
+		}
+		box.innerHTML = out;
+		d.body.appendChild(box);
+
+		// Ha a lap nem látszik, a részecskék megállnak (nem pazarolunk energiát)
+		d.addEventListener('visibilitychange', function () {
+			box.classList.toggle('dd-paused', d.hidden);
+		});
+	}
+
+	/* ---------- 2. Görgetéses megjelenés: csak a képernyőn kívüli elemekre ---------- */
+	var TARGETS = [
+		'.trust-bar__item',
+		'.category-cards__card',
+		'.bestsellers-section .wc-block-product',
+		'.why-section .wp-block-column',
+		'.brands-section .wp-block-image',
+		'ul.products > li.product',
+		'[data-products] > .product',
+		'.entry-card'
+	].join(',');
+
+	function reveal() {
+		if (!('IntersectionObserver' in w)) { return; }
+
+		var vh = w.innerHeight || h.clientHeight, list = [];
+		[].forEach.call(d.querySelectorAll(TARGETS), function (el) {
+			var r = el.getBoundingClientRect();
+			if (r.top > vh * 0.96) { list.push(el); }
+		});
+		if (!list.length) { return; }
+
+		var io = new IntersectionObserver(function (entries) {
+			var k = 0;
+			entries.forEach(function (e) {
+				if (!e.isIntersecting) { return; }
+				e.target.style.setProperty('--dd-delay', Math.min(k, 4) * 0.08 + 's');
+				k++;
+				e.target.classList.add('dd-in');
+				io.unobserve(e.target);
+			});
+		}, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+		list.forEach(function (el) { el.classList.add('dd-reveal'); io.observe(el); });
+
+		// Védőháló: ha valamiért nem futna le, minden elem megjelenik
+		setTimeout(function () {
+			[].forEach.call(d.querySelectorAll('.dd-reveal:not(.dd-in)'), function (el) { el.classList.add('dd-in'); });
+		}, 9000);
+	}
+
+	/* ---------- 3. Kosár-számláló megugrik kosárba tételkor ---------- */
+	function cartBump() {
+		if (!w.jQuery) { return; }
+
+		w.jQuery(d.body).on('added_to_cart', function () {
+			[].forEach.call(d.querySelectorAll('.ct-dynamic-count-cart'), function (el) {
+				el.classList.remove('dd-bump');
+				void el.offsetWidth;
+				el.classList.add('dd-bump');
+			});
+		});
+	}
+
+	function start() {
+		reveal();
+		cartBump();
+
+		// A hangulat-réteg a betöltő eltűnése után indul, hogy ne terhelje az első festést
+		var go = function () { ambient(); };
+		if (h.classList.contains('dd-loading')) {
+			var iv = setInterval(function () {
+				if (!h.classList.contains('dd-loading')) { clearInterval(iv); go(); }
+			}, 250);
+		} else if ('requestIdleCallback' in w) {
+			w.requestIdleCallback(go, { timeout: 1500 });
+		} else {
+			setTimeout(go, 400);
+		}
+	}
+
+	if (d.readyState === 'loading') { d.addEventListener('DOMContentLoaded', start); } else { start(); }
+})();
+
+</script>
+<style id="dd-demo-css">body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}</style>
+<div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak és betöltő"><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="../index.html">Betöltő újra</button><span class="dd-demo__note" id="dd-demo-note" hidden>A készüléked csökkentett mozgásra van állítva, ezért az animációk ki vannak kapcsolva. <button type="button" data-force>Animációk megmutatása</button></span></div>
+<script id="dd-demo-js">
+(function () {
+  var d = document, h = d.documentElement, bar = d.getElementById('dd-demo');
+  if (!bar) { return; }
+  function mark() { var s = h.getAttribute('data-season'); [].forEach.call(bar.querySelectorAll('[data-s]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-s') === s ? 'true' : 'false'); }); }
+  mark();
+  if (h.classList.contains('dd-reduce')) { d.getElementById('dd-demo-note').hidden = false; }
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) { return; }
+    if (b.hasAttribute('data-s')) { if (window.DDMotion) { window.DDMotion.season(b.getAttribute('data-s')); } mark(); }
+    else if (b.hasAttribute('data-replay')) { if (window.DDMotion) { window.DDMotion.replay(b.getAttribute('data-replay') + '?loader=1'); } }
+    else if (b.hasAttribute('data-force')) { try { sessionStorage.setItem('ddMotion', 'on'); } catch (x) {} location.reload(); }
+  });
+})();
+</script>
+
 </body>
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 09:01:23 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 11:14:51 -->
 <!-- QUIC.cloud CCSS in queue -->

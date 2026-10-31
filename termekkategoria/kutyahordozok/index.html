@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="hu">
+<html lang="hu" data-season="autumn" data-dd-intro="1" data-dd-ambient="1">
 <head>
 	
 	<meta charset="UTF-8">
@@ -33,12 +33,38 @@
 
 
 
-
+<style id="dd-loader-css">:root { --dd-bg: var(--color-cream, #FAF7F2); --dd-fg: var(--color-dark, #0F4F4A); --dd-paw: var(--color-primary, #2DA89E); --dd-c1: var(--color-coral, #E89A7B); --dd-c2: var(--color-pastel, #B8E0DA); --dd-c3: var(--color-primary, #2DA89E); --dd-glow: radial-gradient(60% 50% at 18% 12%, rgba(184, 224, 218, .55), transparent 70%), radial-gradient(50% 45% at 88% 92%, rgba(232, 154, 123, .22), transparent 70%); } html[data-season="summer"] { --dd-bg: #E4EFE9; --dd-c1: #FFFFFF; --dd-c2: var(--color-pastel, #B8E0DA); --dd-c3: var(--color-primary, #2DA89E); --dd-glow: radial-gradient(34% 30% at 86% 10%, rgba(232, 154, 123, .55), rgba(232, 154, 123, 0) 70%), radial-gradient(60% 40% at 12% 100%, rgba(45, 168, 158, .22), transparent 70%); } html[data-season="autumn"] { --dd-c1: var(--color-coral, #E89A7B); --dd-c2: var(--color-primary, #2DA89E); --dd-c3: var(--color-dark, #0F4F4A); --dd-glow: radial-gradient(70% 45% at 50% 108%, rgba(232, 154, 123, .38), transparent 70%), radial-gradient(45% 40% at 10% 6%, rgba(184, 224, 218, .35), transparent 70%); } html[data-season="winter"] { --dd-bg: var(--color-dark, #0F4F4A); --dd-fg: var(--color-cream, #FAF7F2); --dd-paw: var(--color-pastel, #B8E0DA); --dd-c1: #FFFFFF; --dd-c2: var(--color-pastel, #B8E0DA); --dd-c3: #FFFFFF; --dd-glow: radial-gradient(55% 45% at 50% 42%, rgba(45, 168, 158, .38), transparent 72%), radial-gradient(40% 30% at 85% 8%, rgba(184, 224, 218, .20), transparent 70%); } .dd-loader { display: none; } html.dd-loading .dd-loader { display: grid; place-items: center; position: fixed; inset: 0; z-index: 2147483000; overflow: hidden; background: var(--dd-glow), var(--dd-bg); color: var(--dd-fg); animation: dd-failsafe 0s linear 4.6s forwards; } html.dd-leaving .dd-loader { animation: dd-iris .8s cubic-bezier(.7, 0, .25, 1) forwards; } html.dd-leaving .dd-loader__scene { animation: dd-scene-out .45s ease-in forwards; } .dd-loader__scene { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px; text-align: center; } .dd-trail { position: relative; width: min(340px, 80vw); height: 104px; } .dd-paw { position: absolute; left: var(--px); top: var(--py); width: 44px; height: 44px; margin: -22px 0 0 -22px; opacity: 0; transform: rotate(var(--pr)) scale(.4); animation: dd-step 1.7s ease-out var(--pd) infinite; } .dd-paw svg { display: block; width: 100%; height: 100%; fill: var(--dd-paw); } .dd-paw::after { content: ""; position: absolute; left: 50%; top: 50%; pointer-events: none; opacity: 0; } html[data-season="spring"] .dd-paw::after { width: 9px; height: 9px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 -9px 0 -1px var(--color-coral, #E89A7B), 0 9px 0 -1px var(--color-coral, #E89A7B), -9px 0 0 -1px var(--color-coral, #E89A7B), 9px 0 0 -1px var(--color-coral, #E89A7B); translate: -44px 0; animation: dd-bloom 1.7s ease-out var(--pd) infinite; } html[data-season="summer"] .dd-paw::after { width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; border: 2px solid var(--color-primary, #2DA89E); animation: dd-ripple 1.7s ease-out var(--pd) infinite; } html[data-season="autumn"] .dd-paw::after { width: 15px; height: 15px; margin: -7px 0 0 -7px; border-radius: 0 100% 0 100%; background: var(--color-coral, #E89A7B); translate: -40px 5px; animation: dd-leaf-drop 1.7s ease-in var(--pd) infinite; } html[data-season="winter"] .dd-paw::after { width: 58px; height: 58px; margin: -29px 0 0 -29px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .85) 0, rgba(255, 255, 255, 0) 68%); animation: dd-puff 1.7s ease-out var(--pd) infinite; } .dd-brand { margin: 0; font-family: var(--font-heading, 'Cormorant Garamond', Georgia, serif); font-size: clamp(36px, 9vw, 54px); font-weight: 600; line-height: 1; letter-spacing: .01em; } .dd-brand span { display: inline-block; opacity: 0; transform: translateY(.45em); animation: dd-letter .6s cubic-bezier(.2, .8, .2, 1) calc(.2s + var(--i) * .05s) forwards; } .dd-line { margin: 0; font-family: var(--font-body, Inter, -apple-system, sans-serif); font-size: 14px; letter-spacing: .03em; opacity: 0; animation: dd-fade .5s ease-out .75s forwards; } .dd-line span { display: none; } html[data-season="spring"] .dd-line span[data-s="spring"], html[data-season="summer"] .dd-line span[data-s="summer"], html[data-season="autumn"] .dd-line span[data-s="autumn"], html[data-season="winter"] .dd-line span[data-s="winter"] { display: inline; } .dd-bar { width: 140px; height: 3px; margin-top: 4px; overflow: hidden; border-radius: 3px; background: rgba(15, 79, 74, .14); } html[data-season="winter"] .dd-bar { background: rgba(250, 247, 242, .2); } .dd-bar::after { content: ""; display: block; height: 100%; border-radius: 3px; background: var(--dd-paw); transform: scaleX(0); transform-origin: left center; animation: dd-bar 1.5s cubic-bezier(.3, .6, .3, 1) .1s forwards; } .dd-sky, .dd-ambient { position: absolute; inset: 0; overflow: hidden; pointer-events: none; } .dd-p { position: absolute; left: var(--x); top: 0; width: var(--s); height: var(--s); opacity: 0; animation: dd-fall var(--t) linear var(--d) infinite; } .dd-p::before { content: ""; display: block; width: 100%; height: 100%; background: var(--dd-c1); animation: dd-sway calc(var(--t) / 3) ease-in-out var(--d) infinite alternate; } .dd-p:nth-child(3n + 2)::before { background: var(--dd-c2); } .dd-p:nth-child(3n)::before { background: var(--dd-c3); } html[data-season="spring"] .dd-p::before { border-radius: 70% 0 70% 0; } html[data-season="autumn"] .dd-p::before { border-radius: 0 100% 0 100%; } html[data-season="autumn"] .dd-p { width: calc(var(--s) * 1.25); height: calc(var(--s) * 1.25); } html[data-season="winter"] .dd-p { width: calc(var(--s) * .5); height: calc(var(--s) * .5); } html[data-season="winter"] .dd-p::before { border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, .7); } html[data-season="winter"] .dd-p:nth-child(3n + 2)::before { background: var(--color-pastel, #B8E0DA); } html[data-season="summer"] .dd-p { animation-name: dd-rise; } html[data-season="summer"] .dd-p::before { border-radius: 50%; background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, 0) 38%), rgba(255, 255, 255, .22); border: 1.5px solid var(--color-primary, #2DA89E); } html[data-season="summer"] .dd-p:nth-child(3n + 2)::before { border-color: var(--color-coral, #E89A7B); background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, 0) 38%), rgba(255, 255, 255, .22); } html[data-season="summer"] .dd-p:nth-child(3n)::before { border-color: var(--color-pastel, #B8E0DA); background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, 0) 38%), rgba(255, 255, 255, .22); } @keyframes dd-step { 0% { opacity: 0; transform: rotate(var(--pr)) scale(.4); } 12% { opacity: 1; transform: rotate(var(--pr)) scale(1.1); } 20% { transform: rotate(var(--pr)) scale(1); } 62% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--pr)) scale(1); } } @keyframes dd-bloom { 0%, 14% { opacity: 0; transform: scale(0); } 32% { opacity: 1; transform: scale(1.25); } 46% { transform: scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } } @keyframes dd-ripple { 0%, 10% { opacity: 0; transform: scale(.4); } 24% { opacity: .7; } 100% { opacity: 0; transform: scale(2.1); } } @keyframes dd-leaf-drop { 0%, 14% { opacity: 0; transform: translateY(-10px) rotate(0deg); } 32% { opacity: 1; } 100% { opacity: 0; transform: translateY(26px) rotate(150deg); } } @keyframes dd-puff { 0%, 10% { opacity: 0; transform: scale(.3); } 26% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5) translateY(-6px); } } @keyframes dd-letter { to { opacity: 1; transform: none; } } @keyframes dd-fade { to { opacity: .85; } } @keyframes dd-bar { to { transform: scaleX(1); } } @keyframes dd-fall { 0% { opacity: 0; transform: translate3d(0, -8vh, 0); } 10% { opacity: var(--o, .9); } 90% { opacity: var(--o, .9); } 100% { opacity: 0; transform: translate3d(var(--dx, 0), 108vh, 0); } } @keyframes dd-rise { 0% { opacity: 0; transform: translate3d(0, 108vh, 0); } 10% { opacity: var(--o, .9); } 90% { opacity: var(--o, .9); } 100% { opacity: 0; transform: translate3d(var(--dx, 0), -10vh, 0); } } @keyframes dd-sway { from { transform: translateX(-14px) rotate(-28deg); } to { transform: translateX(14px) rotate(28deg); } } @keyframes dd-iris { from { clip-path: circle(150% at 50% 50%); } to { clip-path: circle(0% at 50% 50%); visibility: hidden; } } @keyframes dd-scene-out { to { opacity: 0; transform: scale(.9); } } @keyframes dd-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }</style>
+<script id="dd-season" data-no-optimize="1" data-cfasync="false">
+(function () {
+	var d = document.documentElement, w = window, s = null;
+	try {
+		var m = /[?&]season=(spring|summer|autumn|winter)\b/.exec(w.location.search);
+		if (m) { s = m[1]; w.sessionStorage.setItem('ddSeason', s); } else { s = w.sessionStorage.getItem('ddSeason'); }
+	} catch (e) {}
+	if (s && /^(spring|summer|autumn|winter)$/.test(s)) { d.setAttribute('data-season', s); }
+	// Csökkentett mozgás: a rendszer-beállítás az irányadó (nincs betöltő, nincs részecske, nincs animáció).
+	// Kipróbáláshoz ?motion=on (és ?motion=off a visszavonáshoz) felülírja, a böngésző-munkamenet végéig.
+	var force = false;
+	try {
+		var mm = /[?&]motion=(on|off)\b/.exec(w.location.search);
+		if (mm) { if (mm[1] === 'on') { w.sessionStorage.setItem('ddMotion', 'on'); } else { w.sessionStorage.removeItem('ddMotion'); } }
+		force = w.sessionStorage.getItem('ddMotion') === 'on';
+	} catch (e) {}
+	var reduce = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
+	if (force) { d.classList.add('dd-force-motion'); reduce = false; }
+	if (reduce) { d.classList.add('dd-reduce'); }
+	if (!d.hasAttribute('data-dd-intro') || reduce) { return; }
+	var seen = true, replay = /[?&]loader=1\b/.test(w.location.search);
+	try { seen = !!w.sessionStorage.getItem('ddSeen'); w.sessionStorage.setItem('ddSeen', '1'); } catch (e) {}
+	if (!seen || replay) { d.classList.add('dd-loading'); }
+})();
+</script>
+	
 <style id='wp-img-auto-sizes-contain-inline-css'>
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../../wp-content/litespeed/css/e12dc191a442f649971ae42d6689563d.css" />
+<link data-optimized="2" rel="stylesheet" href="../../wp-content/litespeed/css/e64c27c2a029402a0085cc443c3b7786.css" />
 
 
 
@@ -83,6 +109,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 --wvs-selected-item-text-color:#000000}
 
 </style>
+
 
 
 
@@ -171,7 +198,39 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 <body class="archive tax-product_cat term-kutyahordozok term-30 wp-custom-logo wp-embed-responsive wp-theme-blocksy wp-child-theme-debbiedog-child theme-blocksy woocommerce woocommerce-page woocommerce-no-js woo-variation-swatches wvs-behavior-blur wvs-theme-debbiedog-child wvs-show-label wvs-tooltip woocommerce-archive" data-link="type-2" data-prefix="woo_categories" data-header="type-1" data-footer="type-1">
 
-<a class="skip-link screen-reader-text" href="#main">Skip to content</a><div class="ct-drawer-canvas" data-location="start">
+<div id="dd-loader" class="dd-loader" role="status" aria-live="polite">
+	<span class="screen-reader-text">Betöltés…</span>
+	<div class="dd-sky" aria-hidden="true"><i class="dd-p" style="--x:27%;--s:18px;--t:4.8s;--d:-0.8s;--dx:-6vw"></i><i class="dd-p" style="--x:43.8%;--s:12px;--t:4.4s;--d:-2s;--dx:-6vw"></i><i class="dd-p" style="--x:54.3%;--s:12px;--t:3.9s;--d:-0.1s;--dx:5vw"></i><i class="dd-p" style="--x:71.8%;--s:18px;--t:4.7s;--d:-0.5s;--dx:5vw"></i><i class="dd-p" style="--x:18.9%;--s:14px;--t:3.9s;--d:-1s;--dx:5vw"></i><i class="dd-p" style="--x:25.7%;--s:14px;--t:4.5s;--d:-4.4s;--dx:-3vw"></i><i class="dd-p" style="--x:49.6%;--s:14px;--t:6.1s;--d:-2.6s;--dx:-7vw"></i><i class="dd-p" style="--x:47.7%;--s:14px;--t:4s;--d:-0s;--dx:-3vw"></i><i class="dd-p" style="--x:52.1%;--s:13px;--t:6.2s;--d:-3.1s;--dx:-8vw"></i><i class="dd-p" style="--x:3.9%;--s:15px;--t:4.4s;--d:-2.5s;--dx:-6vw"></i><i class="dd-p" style="--x:58.9%;--s:9px;--t:5.7s;--d:-1.5s;--dx:0vw"></i><i class="dd-p" style="--x:60.7%;--s:10px;--t:5.4s;--d:-2s;--dx:7vw"></i><i class="dd-p" style="--x:40.5%;--s:17px;--t:4s;--d:-3.9s;--dx:0vw"></i><i class="dd-p" style="--x:83.5%;--s:11px;--t:3.8s;--d:-2.2s;--dx:-3vw"></i><i class="dd-p" style="--x:34.7%;--s:12px;--t:4.2s;--d:-2.7s;--dx:3vw"></i><i class="dd-p" style="--x:57.4%;--s:8px;--t:5s;--d:-3.8s;--dx:1vw"></i></div>
+	<div class="dd-loader__scene" aria-hidden="true">
+		<div class="dd-trail"><span class="dd-paw" style="--px:8%;--py:70%;--pr:82deg;--pd:0s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span><span class="dd-paw" style="--px:33%;--py:26%;--pr:92deg;--pd:.22s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span><span class="dd-paw" style="--px:58%;--py:70%;--pr:80deg;--pd:.44s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span><span class="dd-paw" style="--px:84%;--py:26%;--pr:90deg;--pd:.66s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span></div>
+		<p class="dd-brand"><span style="--i:0">D</span><span style="--i:1">e</span><span style="--i:2">b</span><span style="--i:3">b</span><span style="--i:4">i</span><span style="--i:5">e</span><span style="--i:6">D</span><span style="--i:7">o</span><span style="--i:8">g</span></p>
+		<p class="dd-line">
+			<span data-s="spring">Tavaszi sétára hívunk, mindjárt kész…</span>
+			<span data-s="summer">Frissítő nyári ápolás, egy pillanat…</span>
+			<span data-s="autumn">Őszi levélzizegés, mindjárt kész…</span>
+			<span data-s="winter">Meleg téli ápolás, egy pillanat…</span>
+		</p>
+		<div class="dd-bar"></div>
+	</div>
+	<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false"><symbol id="dd-paw-shape" viewBox="0 0 64 64"><ellipse cx="32" cy="42" rx="14" ry="11"/><ellipse cx="13" cy="28" rx="6" ry="8" transform="rotate(-20 13 28)"/><ellipse cx="24" cy="15" rx="6" ry="8.5" transform="rotate(-8 24 15)"/><ellipse cx="40" cy="15" rx="6" ry="8.5" transform="rotate(8 40 15)"/><ellipse cx="51" cy="28" rx="6" ry="8" transform="rotate(20 51 28)"/></symbol></svg>
+</div>
+<script id="dd-loader-js" data-no-optimize="1" data-cfasync="false">
+(function () {
+	var d = document.documentElement, w = window;
+	if (!d.classList.contains('dd-loading')) { return; }
+	var t0 = Date.now(), MIN = 1500, done = false;
+	function out() {
+		if (done) { return; }
+		done = true;
+		d.classList.add('dd-leaving');
+		setTimeout(function () { d.classList.remove('dd-loading', 'dd-leaving'); }, 850);
+	}
+	function ready() { setTimeout(out, Math.max(0, MIN - (Date.now() - t0))); }
+	if (document.readyState === 'complete') { ready(); } else { w.addEventListener('load', ready); }
+	setTimeout(out, 4000);
+})();
+</script>
+	<a class="skip-link screen-reader-text" href="#main">Skip to content</a><div class="ct-drawer-canvas" data-location="start">
 		<div id="search-modal" class="ct-panel" data-behaviour="modal" role="dialog" aria-label="Search modal" inert>
 			<div class="ct-panel-actions">
 				<button class="ct-toggle-close" data-type="type-1" aria-label="Close search modal">
@@ -714,6 +773,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 
 
+
     
 	<!--copyscapeskip-->
 	<!-- V1 -->
@@ -860,9 +920,157 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
   });
 })();
 </script>
+<script id="dd-motion">
+/* Finom mozgás: évszakos hangulat-réteg, görgetéses megjelenés, kosár-jelzés.
+   Nem küld hálózati kérést, nem tárol személyes adatot (csak a böngésző sessionStorage-ában az évszak-kipróbálást).
+   Csökkentett mozgásnál (prefers-reduced-motion) semmit nem csinál. */
+(function () {
+	'use strict';
+
+	var d = document, h = d.documentElement, w = window;
+	// A fejléc-szkript (inc/seasons.php) dönt: .dd-reduce = csökkentett mozgás, .dd-force-motion = kipróbálási mód
+	var reduce = h.classList.contains('dd-reduce');
+
+	// Nyilvános segéd: évszak váltása (kipróbáláshoz) és a betöltő újrajátszása
+	w.DDMotion = {
+		season: function (s) {
+			if (!/^(spring|summer|autumn|winter)$/.test(s)) { return; }
+			h.setAttribute('data-season', s);
+			try { w.sessionStorage.setItem('ddSeason', s); } catch (e) {}
+		},
+		replay: function (url) {
+			try { w.sessionStorage.removeItem('ddSeen'); } catch (e) {}
+			w.location.href = url || (w.location.pathname + '?loader=1');
+		}
+	};
+
+	if (reduce) { return; }
+
+	function rand(i, k) { return Math.abs((Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1); }
+
+	/* ---------- 1. Évszakos hangulat-réteg: kevés, lassú részecske a bemutatkozó oldalakon ---------- */
+	function ambient() {
+		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-ambient')) { return; }
+
+		var conn = navigator.connection;
+		if (conn && conn.saveData) { return; }
+		if (navigator.deviceMemory && navigator.deviceMemory <= 2) { return; }
+
+		var box = d.createElement('div');
+		box.className = 'dd-ambient';
+		box.setAttribute('aria-hidden', 'true');
+
+		var n = w.innerWidth < 700 ? 9 : 14, out = '';
+		for (var i = 0; i < n; i++) {
+			var t = (3.6 + rand(i, 3) * 2.8).toFixed(1);
+			out += '<i class="dd-p" style="--x:' + (rand(i, 1) * 96 + 2).toFixed(1) + '%;--s:' + (8 + Math.round(rand(i, 2) * 10)) +
+				'px;--t:' + t + 's;--d:-' + (rand(i, 4) * t * 3.2).toFixed(1) + 's;--dx:' + Math.round((rand(i, 5) - 0.5) * 14) + 'vw"></i>';
+		}
+		box.innerHTML = out;
+		d.body.appendChild(box);
+
+		// Ha a lap nem látszik, a részecskék megállnak (nem pazarolunk energiát)
+		d.addEventListener('visibilitychange', function () {
+			box.classList.toggle('dd-paused', d.hidden);
+		});
+	}
+
+	/* ---------- 2. Görgetéses megjelenés: csak a képernyőn kívüli elemekre ---------- */
+	var TARGETS = [
+		'.trust-bar__item',
+		'.category-cards__card',
+		'.bestsellers-section .wc-block-product',
+		'.why-section .wp-block-column',
+		'.brands-section .wp-block-image',
+		'ul.products > li.product',
+		'[data-products] > .product',
+		'.entry-card'
+	].join(',');
+
+	function reveal() {
+		if (!('IntersectionObserver' in w)) { return; }
+
+		var vh = w.innerHeight || h.clientHeight, list = [];
+		[].forEach.call(d.querySelectorAll(TARGETS), function (el) {
+			var r = el.getBoundingClientRect();
+			if (r.top > vh * 0.96) { list.push(el); }
+		});
+		if (!list.length) { return; }
+
+		var io = new IntersectionObserver(function (entries) {
+			var k = 0;
+			entries.forEach(function (e) {
+				if (!e.isIntersecting) { return; }
+				e.target.style.setProperty('--dd-delay', Math.min(k, 4) * 0.08 + 's');
+				k++;
+				e.target.classList.add('dd-in');
+				io.unobserve(e.target);
+			});
+		}, { rootMargin: '0px 0px -8% 0px', threshold: 0.08 });
+
+		list.forEach(function (el) { el.classList.add('dd-reveal'); io.observe(el); });
+
+		// Védőháló: ha valamiért nem futna le, minden elem megjelenik
+		setTimeout(function () {
+			[].forEach.call(d.querySelectorAll('.dd-reveal:not(.dd-in)'), function (el) { el.classList.add('dd-in'); });
+		}, 9000);
+	}
+
+	/* ---------- 3. Kosár-számláló megugrik kosárba tételkor ---------- */
+	function cartBump() {
+		if (!w.jQuery) { return; }
+
+		w.jQuery(d.body).on('added_to_cart', function () {
+			[].forEach.call(d.querySelectorAll('.ct-dynamic-count-cart'), function (el) {
+				el.classList.remove('dd-bump');
+				void el.offsetWidth;
+				el.classList.add('dd-bump');
+			});
+		});
+	}
+
+	function start() {
+		reveal();
+		cartBump();
+
+		// A hangulat-réteg a betöltő eltűnése után indul, hogy ne terhelje az első festést
+		var go = function () { ambient(); };
+		if (h.classList.contains('dd-loading')) {
+			var iv = setInterval(function () {
+				if (!h.classList.contains('dd-loading')) { clearInterval(iv); go(); }
+			}, 250);
+		} else if ('requestIdleCallback' in w) {
+			w.requestIdleCallback(go, { timeout: 1500 });
+		} else {
+			setTimeout(go, 400);
+		}
+	}
+
+	if (d.readyState === 'loading') { d.addEventListener('DOMContentLoaded', start); } else { start(); }
+})();
+
+</script>
+<style id="dd-demo-css">body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}</style>
+<div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak és betöltő"><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="../../index.html">Betöltő újra</button><span class="dd-demo__note" id="dd-demo-note" hidden>A készüléked csökkentett mozgásra van állítva, ezért az animációk ki vannak kapcsolva. <button type="button" data-force>Animációk megmutatása</button></span></div>
+<script id="dd-demo-js">
+(function () {
+  var d = document, h = d.documentElement, bar = d.getElementById('dd-demo');
+  if (!bar) { return; }
+  function mark() { var s = h.getAttribute('data-season'); [].forEach.call(bar.querySelectorAll('[data-s]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-s') === s ? 'true' : 'false'); }); }
+  mark();
+  if (h.classList.contains('dd-reduce')) { d.getElementById('dd-demo-note').hidden = false; }
+  bar.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) { return; }
+    if (b.hasAttribute('data-s')) { if (window.DDMotion) { window.DDMotion.season(b.getAttribute('data-s')); } mark(); }
+    else if (b.hasAttribute('data-replay')) { if (window.DDMotion) { window.DDMotion.replay(b.getAttribute('data-replay') + '?loader=1'); } }
+    else if (b.hasAttribute('data-force')) { try { sessionStorage.setItem('ddMotion', 'on'); } catch (x) {} location.reload(); }
+  });
+})();
+</script>
+
 </body>
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 09:00:57 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 11:14:24 -->
 <!-- QUIC.cloud CCSS in queue -->
