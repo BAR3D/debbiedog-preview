@@ -1,0 +1,1812 @@
+/*
+Theme Name:   DebbieDog Child
+Theme URI:    https://debbiedog.hu
+Description:  DebbieDog child theme a Blocksy szülő témához
+Author:       BlackStar255
+Author URI:   https://github.com/BlackStar255
+Template:     blocksy
+Version:      1.0.0
+License:      GNU General Public License v2 or later
+License URI:  http://www.gnu.org/licenses/gpl-2.0.html
+Text Domain:  debbiedog-child
+*/
+
+/* ==========================================================================
+   1. DebbieDog Brand Colors
+   ========================================================================== */
+
+:root {
+    --color-cream:      #FAF7F2; /* alap háttér */
+    --color-pastel:     #B8E0DA; /* pasztell akcent, kártya háttér */
+    --color-primary:    #2DA89E; /* fő márkaszín, gombok */
+    --color-dark:       #0F4F4A; /* mély türkiz, címek, sötét háttér */
+    --color-coral:      #E89A7B; /* meleg akcent, hangsúly */
+    --color-text-body:  #5a5346; /* test szöveg */
+    --color-text-muted: #6F695E; /* halvány szöveg (AA: 5,09:1 krémen; a korábbi #8a8478 csak 3,48:1 volt) */
+    --color-border:     #E8E2D6; /* keretek, elválasztók (nem szöveg) */
+
+    /* Akadálymentes változatok (WCAG AA, min. 4,5:1) — szövegnek és kitöltött gombnak ezeket használjuk,
+       a --color-primary / --color-coral díszítő felületen marad */
+    --color-primary-strong:   #1B7A72; /* gomb-háttér és szöveg (krém szöveggel 4,82:1, fehér háttéren 5,16:1) */
+    --color-primary-stronger: #145F59; /* hover állapot (krém szöveggel 6,99:1) */
+    --color-on-coral:         #083531; /* szöveg a korall felületen (5,97:1) */
+}
+
+/* ==========================================================================
+   1a. Mozgás-tokenek — az időzítések és görbék egy helyen (assets/motion/motion.css és a hover-átmenetek is ezt használják).
+   Mérce (HorizonX UI Motion Kit): belépő 180–260 ms ease-out, kilépő 120–180 ms ease-in; a hosszabb értékek
+   dekoratív jelenetmozgásra valók (görgetéses megjelenés, képzoom), nem visszajelzésre.
+   ========================================================================== */
+
+:root {
+    --dd-ease-out:    cubic-bezier(.2, .7, .2, 1);
+    --dd-ease-in:     cubic-bezier(.4, 0, 1, 1);
+    --dd-ease-spring: cubic-bezier(.3, 1.5, .5, 1);
+
+    --dd-dur-enter:   .22s;  /* hover, fókusz, állapotváltás (belépő) */
+    --dd-dur-exit:    .15s;  /* ugyanezek visszaállása (kilépő) */
+    --dd-dur-slide:   .3s;   /* becsúszó sáv, kitöltő sáv */
+    --dd-dur-pop:     .4s;   /* kipattanó elem */
+    --dd-dur-bump:    .55s;  /* kosár-számláló megugrása */
+    --dd-dur-scene:   .7s;   /* görgetéses megjelenés, képzoom, ikon-billenés */
+}
+
+/* ==========================================================================
+   2. Tipográfia változók
+   ========================================================================== */
+
+:root {
+    --font-heading: 'Cormorant Garamond', Georgia, serif;
+    --font-body:    'Inter', -apple-system, sans-serif;
+}
+
+/* ==========================================================================
+   2a. Betűtípusok — saját tárhelyről (fonts/), nincs külső Google-kérés
+   Változó betűtípusok (SIL OFL 1.1), latin + latin-ext (a magyar ő/ű a latin-ext-ben van).
+   ========================================================================== */
+
+@font-face {
+    font-family:   'Cormorant Garamond';
+    font-style:    normal;
+    font-weight:   500 600;
+    font-display:  swap;
+    src:           url('fonts/cormorant-garamond-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family:   'Cormorant Garamond';
+    font-style:    normal;
+    font-weight:   500 600;
+    font-display:  swap;
+    src:           url('fonts/cormorant-garamond-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family:   'Inter';
+    font-style:    normal;
+    font-weight:   400 600;
+    font-display:  swap;
+    src:           url('fonts/inter-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+    font-family:   'Inter';
+    font-style:    normal;
+    font-weight:   400 600;
+    font-display:  swap;
+    src:           url('fonts/inter-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ==========================================================================
+   3. Blocksy globális paletta — saját brand színeinkre mutat
+   ========================================================================== */
+
+/* A Blocksy a palettát szerepek szerint használja: 1 = linkek és gombok, 2 = azok hover állapota,
+   3 = törzsszöveg, 4 = címek, 5 = keretek, 6 = váltakozó háttér, 7 = oldalháttér, 8 = kártyák, dobozok.
+   A korábbi hozzárendelés a 6–8. helyre sötétbarna szövegszínt tett (barna oldalháttér, barna
+   legördülők és kártyák), a 3. helyre pedig a koralt (korall törzsszöveg). */
+:root {
+    --theme-palette-color-1: var(--color-primary-strong);
+    --theme-palette-color-2: var(--color-primary-stronger);
+    --theme-palette-color-3: var(--color-text-body);
+    --theme-palette-color-4: var(--color-dark);
+    --theme-palette-color-5: var(--color-border);
+    --theme-palette-color-6: var(--color-cream);
+    --theme-palette-color-7: var(--color-cream);
+    --theme-palette-color-8: #FFFFFF;
+}
+
+/* ==========================================================================
+   4. Blocksy font integráció
+   ========================================================================== */
+
+/* A Blocksy a törzsszöveg és a címek betűtípusát a --theme-font-family változóból veszi
+   (`body, h1…h6 { font-family: var(--theme-font-family) }`). A korábbi --theme-body-font /
+   --theme-headings-font nevek nem Blocksy-változók voltak, ezért a Cormorant és az Inter a
+   törzsön és a címeken sosem érvényesült. A változót a body-n és a címeken írjuk felül, így a
+   sorrendtől (Customizer inline CSS) függetlenül érvényes. */
+body {
+    --theme-font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    --theme-font-family: var(--font-heading);
+}
+
+/* ==========================================================================
+   5. Alap tipográfia
+   ========================================================================== */
+
+body {
+    font-family: var(--font-body);
+    font-size:   16px;
+    line-height: 1.65;
+    color:       var(--color-text-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family:   var(--font-heading);
+    font-weight:   600;
+    line-height:   1.2;
+    color:         var(--color-dark);
+    margin-bottom: 0.5em;
+}
+
+h1 { font-size: clamp(1.9rem,  4vw,   2.8rem); }
+h2 { font-size: clamp(1.6rem,  3vw,   2.2rem); }
+h3 { font-size: clamp(1.3rem,  2.5vw, 1.7rem); }
+h4 { font-size: clamp(1.15rem, 2vw,   1.4rem); }
+h5 { font-size: clamp(1.0rem,  1.5vw, 1.2rem); }
+h6 { font-size: clamp(0.95rem, 1.2vw, 1.05rem); }
+
+/* ==========================================================================
+   6. Főoldal hero szekció (.hero-section)
+   ========================================================================== */
+
+/* Eyebrow pill — "Természetes ápolás — ami jólesik" felirat a H1 felett */
+.hero-eyebrow {
+    display:        inline-block;
+    background:     var(--color-pastel);    /* #B8E0DA */
+    color:          var(--color-dark);      /* #0F4F4A */
+    padding:        4px 14px;
+    border-radius:  20px;
+    font-family:    var(--font-body);
+    font-size:      0.875rem;
+    font-weight:    500;
+    letter-spacing: 0.02em;
+    margin-bottom:  0.5rem;
+}
+
+/* Hero H1 felső margó csökkentése — eyebrow és cím összetartozzon */
+.hero-section h1.wp-block-heading {
+    margin-top: 0.25rem;
+}
+
+/* Hero szövegoszlop: padding a szöveg körül, vertikálisan középre */
+.hero-section .hero-text-col {
+    padding: 3.5rem 2rem 3.5rem 3rem;
+}
+
+/* Hero alszöveg ("Kézzel készült természetes termékek...") — real markup: <p class="has-text-color" style="color:#5a5346">.
+   Font-size/line-height megegyezik a "Miért a DebbieDogtól?" törzsszövegével (.why-section .wp-block-column.why-text-col p). */
+.hero-section .hero-text-col p.has-text-color {
+    font-size:   clamp(1.15rem, 1.3vw, 1.25rem);
+    line-height: 1.7;
+}
+
+/* Hero képoszlop: a kép aljára igazodik, nincs extra padding */
+.hero-section .hero-img-col {
+    padding:    0;
+    overflow:   hidden;
+}
+
+/* Hero kép: teljes szélességű az oszlopban, természetes arány (nem levágva),
+   bal széle lágyan olvad a krém (#FAF7F2) háttérbe */
+.hero-section .hero-img-col .wp-block-image {
+    margin: 0;
+    display: block;
+    line-height: 0;
+}
+
+.hero-section .hero-img-col .wp-block-image img {
+    display:             block;
+    width:               100%;
+    height:              auto;
+    -webkit-mask-image:  linear-gradient(to right, transparent 0%, black 28%);
+    mask-image:          linear-gradient(to right, transparent 0%, black 28%);
+}
+
+/* ==========================================================================
+   Hero reszponzív — 2 töréspont (javított)
+   ========================================================================== */
+
+/* ÁLTALÁNOS: jobbra kilógás megakadályozása */
+.hero-section.wp-block-group {
+    overflow-x: clip;
+}
+
+/* ASZTALI (>1024px): kétoszlopos, kép saját 16:9 arányában, nem crop-olva.
+   A hero magassága a kép természetes magasságát követi — nincs fix min-height. */
+@media (min-width: 1025px) {
+
+    /* 1.5rem gutter bal/jobb, mint trust-bar/category-cards outer szekciónál —
+       így a hero belső tartalma pixelre igazodik az alatta lévő szekciókhoz. */
+    .hero-section.wp-block-group {
+        padding-inline: 1.5rem;
+    }
+
+    .hero-section .wp-block-columns {
+        flex-wrap:     nowrap !important;
+        align-items:   stretch;        /* mindkét oszlop kitölti a sor magasságát */
+        max-width:     1200px;         /* azonos a trust-bar__container / category-cards__container értékkel */
+        margin-inline: auto;           /* vízszintesen középre, krém gutterek kétoldalt */
+    }
+
+    /* Szövegoszlop: vertikálisan középre igazítva a képhez */
+    .hero-section .hero-text-col {
+        flex:        0 0 45% !important;
+        max-width:   45% !important;
+        align-self:  center;
+        padding:     3.5rem 2rem 3.5rem 0;  /* bal padding 0 — a columns 1.5rem gutterje adja az igazítást */
+    }
+
+    /* Képoszlop: flex konténer, kép középre igazítva benne, nincs clip */
+    .hero-section .hero-img-col {
+        flex:             0 0 55% !important;
+        max-width:        55% !important;
+        align-self:       flex-end;   /* kép aljára igazodik a hero-ban */
+        padding:          0;
+        overflow:         visible;    /* NEM hidden — nincs levágás */
+        display:          flex;
+        align-items:      flex-end;   /* kép az oszlop aljára igazodik */
+        justify-content:  flex-end;
+    }
+
+    /* wp-block-image figure: töltse ki a képoszlopot */
+    .hero-section .hero-img-col .wp-block-image {
+        width:       100%;
+        margin:      0;
+        line-height: 0;
+    }
+
+    /* Kép: saját 16:9 arányában, NEM crop-olva, bal szél maszk */
+    .hero-section .hero-img-col .wp-block-image img {
+        display:             block;
+        width:               100%;
+        height:              auto;     /* arány megtartva, hero igazodik a képhez */
+        -webkit-mask-image:  linear-gradient(to right, transparent 0%, black 28%);
+        mask-image:          linear-gradient(to right, transparent 0%, black 28%);
+    }
+}
+
+/* EGYMÁS ALATT (≤1024px): szöveg fölül, kép alul teljes szélességben
+   Fedezi: mobil (390-767px) + tablet (768-1024px) — 1. probléma javítva
+   767px-en ÉS 768-1024px-en is azonos szép elrendezés fut               */
+@media (max-width: 1024px) {
+    .hero-section .wp-block-columns {
+        flex-direction: column !important;
+        flex-wrap:      wrap !important;
+        align-items:    stretch !important;
+    }
+    .hero-section .hero-text-col,
+    .hero-section .hero-img-col {
+        flex:       0 0 100% !important;
+        max-width:  100% !important;
+        width:      100% !important;
+        align-self: stretch !important;
+    }
+    .hero-section .hero-text-col {
+        order:   1;
+        padding: 2rem 1.5rem 1.5rem;
+    }
+    .hero-section .hero-img-col {
+        order:    2;
+        padding:  0;
+        overflow: visible;
+    }
+    .hero-section .hero-img-col .wp-block-image img {
+        width:               100%;
+        height:              auto;
+        display:             block;
+        -webkit-mask-image:  none !important;
+        mask-image:          none !important;
+    }
+    /* H1 mobil/tablet: ne törjön csúnyán, kisebb méretek */
+    .hero-section h1.wp-block-heading {
+        font-size:     clamp(1.5rem, 5.5vw, 1.9rem);
+        overflow-wrap: break-word;
+        word-break:    normal;
+        hyphens:       manual;
+    }
+}
+
+/* TELEFON (≤767px): a kép fölül, nagyobban (a jobb oldala látszik: kutya + termékek), a bal oldali üres háttér kilóg;
+   a kép alja és teteje lágyan a krém háttérbe olvad, a szöveg alatta áll, így semmi nem lóg rá a termékekre.
+   A kép szélességét a `sizes` érték (inc/hero.php) hangolja a nagyobb felbontású változathoz. */
+@media (max-width: 767px) {
+    .hero-section .hero-img-col {
+        order:           1;
+        display:         flex;
+        justify-content: flex-end;
+        overflow:        hidden;
+        height:          clamp(310px, 60vw, 460px);   /* a kép szélessége (16:9) a nagyobb telefonokon is kitölti a sávot */
+    }
+    .hero-section .hero-text-col {
+        order:   2;
+        padding: 0.5rem 1.5rem 2rem;
+    }
+    .hero-section .hero-img-col .wp-block-image {
+        flex:   none;
+        width:  auto;
+        height: 100%;
+        margin: 0;
+    }
+    .hero-section .hero-img-col .wp-block-image img {
+        height:             clamp(310px, 60vw, 460px);
+        width:              auto;
+        max-width:          none;
+        -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%, #000 92%, transparent 100%) !important;
+        mask-image:         linear-gradient(to bottom, transparent 0, #000 16%, #000 92%, transparent 100%) !important;
+    }
+}
+
+/* Gomb alap: sima átmenet a hovernél (csak hero szekció) */
+.hero-section .wp-block-button__link {
+    transition: background-color var(--dd-dur-enter) var(--dd-ease-out), color var(--dd-dur-enter) var(--dd-ease-out), border-color var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+/* Fő gomb alapállapot: akadálymentes türkíz háttér (4,82:1 a krém szöveggel;
+   a blokk inline színe a --color-primary, az csak 2,73:1 volt) */
+.hero-section .wp-block-button:not(.is-style-outline) .wp-block-button__link {
+    background-color: var(--color-primary-strong) !important;
+    color:            var(--color-cream) !important;
+}
+
+/* Fő gomb hover: sötétebb türkíz, szöveg marad krém */
+.hero-section .wp-block-button:not(.is-style-outline) .wp-block-button__link:hover {
+    background-color: var(--color-primary-stronger) !important;
+    color:            var(--color-cream) !important;
+}
+
+/* Outline gomb hover: akadálymentes türkíz háttér, krém szöveg, keret marad */
+.hero-section .wp-block-button.is-style-outline .wp-block-button__link:hover {
+    background-color: var(--color-primary-strong) !important;
+    color:            var(--color-cream) !important;
+    border-color:     var(--color-primary-strong) !important;
+}
+
+/* ==========================================================================
+   7. Főoldal — Trust ikonsor (.trust-bar)
+   ========================================================================== */
+
+/* A főoldal body háttere krém — ne látsszon barna sáv a szekciók körül.
+   Nem post-ID-re (pl. page-id-11038) hivatkozunk, mert az ID élesen más lesz:
+   `body.home` az élő főoldalra (Beállítások → Olvasás → statikus kezdőlap), a `:has()`
+   szabály pedig minden oldalra, amelyen a hero szekció szerepel (a lokális előnézethez is).
+   Csak ezekre az oldalakra vonatkozik, a globális hátteret nem érinti. */
+body.home {
+    background-color: var(--color-cream) !important;
+}
+
+body:has(.hero-section) {
+    background-color: var(--color-cream) !important;
+}
+
+/* Külső szekció: krém háttér, teljes viewport-szélességű breakout,
+   mivel a wp:html blokk nem alignfull — container-ből kitörő trükk */
+.trust-bar {
+    background:   var(--color-cream);
+    padding:      50px 1.5rem;
+    width:        100vw;
+    margin-left:  calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+
+/* Belső konténer: max-width, középre */
+.trust-bar__container {
+    max-width: 1200px;
+    margin:    0 auto;
+}
+
+/* Fehér kártya */
+.trust-bar__card {
+    background:    #ffffff;
+    border:        1px solid #E8E0D5;
+    border-radius: 16px;
+    box-shadow:    0 6px 22px rgba(15, 79, 74, 0.06);
+    padding:       22px;
+}
+
+/* 4 oszlopos grid asztalin, osztók border-right-tal */
+.trust-bar__items {
+    display:               grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:                   0;
+}
+
+/* Egy ikon-elem */
+.trust-bar__item {
+    display:         flex;
+    flex-direction:  column;
+    align-items:     center;
+    text-align:      center;
+    padding:         12px 20px;
+    border-right:    1px solid #EFE9DF;
+}
+
+.trust-bar__item:last-child {
+    border-right: none;
+}
+
+/* Pasztell ikorkör */
+.trust-bar__icon {
+    width:           52px;
+    height:          52px;
+    background:      var(--color-pastel);
+    border-radius:   50%;
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    margin-bottom:   10px;
+    flex-shrink:     0;
+}
+
+/* Félkövér cím */
+.trust-bar__title {
+    color:       var(--color-dark);
+    font-family: var(--font-body);
+    font-size:   14px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin:      0 0 4px;
+}
+
+/* Halvány alcím */
+.trust-bar__subtitle {
+    color:       var(--color-text-muted);
+    font-family: var(--font-body);
+    font-size:   12px;
+    line-height: 1.4;
+    margin:      0;
+}
+
+/* Trust bar - tablet (2×2 elrendezés, 768-1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .trust-bar__items {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .trust-bar__item {
+        border-right:  none;
+        border-bottom: 1px solid #EFE9DF;
+        padding:       18px 24px;
+    }
+    /* Jobb oldali elemekre visszatesszük a függőleges osztót */
+    .trust-bar__item:nth-child(odd) {
+        border-right: 1px solid #EFE9DF;
+    }
+    /* Az alsó sor elemeinek nincs alsó keret */
+    .trust-bar__item:last-child,
+    .trust-bar__item:nth-last-child(2) {
+        border-bottom: none;
+    }
+}
+
+/* Trust bar - mobil (1 oszlop, <768px) */
+@media (max-width: 767px) {
+    .trust-bar {
+        padding: 36px 1rem;
+    }
+    .trust-bar__items {
+        grid-template-columns: 1fr;
+    }
+    .trust-bar__item {
+        border-right:  none;
+        border-bottom: 1px solid #EFE9DF;
+        padding:       16px 12px;
+    }
+    .trust-bar__item:last-child {
+        border-bottom: none;
+    }
+}
+
+/* ==========================================================================
+   8. Főoldal - Kategóriakártyák (.category-cards)
+   ========================================================================== */
+
+/* Külső szekció: krém háttér, teljes viewport-szélességű breakout (mint a trust-bar) */
+.category-cards {
+    background:   var(--color-cream);
+    padding:      60px 1.5rem;
+    width:        100vw;
+    margin-left:  calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+}
+
+/* Belső konténer: max-width, középre */
+.category-cards__container {
+    max-width: 1200px;
+    margin:    0 auto;
+}
+
+/* Szekció-cím középen */
+.category-cards__title {
+    text-align:    center;
+    color:         var(--color-dark);
+    margin-bottom: 0.5rem;
+}
+
+/* Alcím középen — font/szín a közös 8a blokkban, itt csak layout */
+.category-cards__subtitle {
+    text-align: center;
+    margin:     0 0 40px;
+}
+
+/* 4 oszlopos rács asztalin */
+.category-cards__grid {
+    display:               grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:                   24px;
+}
+
+/* Kártya: a teljes kártya egy kattintható link, fehér háttér, lekerekített, finom árnyék */
+.category-cards__card {
+    display:         block;
+    background:      #ffffff;
+    border:           1px solid #E8E0D5;
+    border-radius:    16px;
+    box-shadow:       0 6px 22px rgba(15, 79, 74, 0.06);
+    overflow:         hidden;
+    text-decoration:  none;
+    color:            inherit;
+    transition:       transform var(--dd-dur-enter) var(--dd-ease-out), box-shadow var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+/* Hover: finom emelkedés + erősebb árnyék */
+.category-cards__card:hover {
+    transform:  translateY(-4px);
+    box-shadow: 0 12px 30px rgba(15, 79, 74, 0.12);
+}
+
+/* Kép-konténer: négyzetes (1:1) arány, kép kitölti, nem torzul */
+.category-cards__image-wrap {
+    aspect-ratio: 1 / 1;
+    overflow:     hidden;
+}
+
+.category-cards__image-wrap img {
+    display:    block;
+    width:      100%;
+    height:     100%;
+    object-fit: cover;
+}
+
+/* Szöveges rész a kép alatt */
+.category-cards__body {
+    padding: 20px;
+}
+
+.category-cards__card-title {
+    color:         var(--color-dark);
+    font-family:   var(--font-body);
+    font-weight:   600;
+    font-size:     17px;
+    margin:        0 0 8px;
+}
+
+.category-cards__card-desc {
+    color:       var(--color-text-body);
+    font-family: var(--font-body);
+    font-size:   13px;
+    margin:      0 0 14px;
+}
+
+/* "Megnézem →" — szín a kártya hoverre sötétebb türkízre vált */
+.category-cards__link {
+    display:     inline-block;
+    color:       var(--color-primary-strong);
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size:   14px;
+    transition:  color var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+.category-cards__card:hover .category-cards__link {
+    color: var(--color-primary-stronger);
+}
+
+/* Tablet: 2×2 elrendezés */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .category-cards__grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Mobil: 1 oszlop, egymás alatt */
+@media (max-width: 767px) {
+    .category-cards {
+        padding: 40px 1rem;
+    }
+    .category-cards__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==========================================================================
+   8a. Főoldal szekció-alcímek — egységes stílus (kategória / bestsellers / márkáink)
+   Szelektorok: .category-cards__subtitle | .bestsellers-section > p | .brands-section > p
+   Ha a méretet/színt változtatni kell a jövőben: EZT a blokkot szerkeszd.
+   ========================================================================== */
+
+.category-cards__subtitle,
+.bestsellers-section > p,
+.brands-section > p {
+    font-family: var(--font-body);
+    font-size:   clamp(1rem, 1.3vw, 1.2rem);   /* ~16px -> 19px FHD-n */
+    color:       var(--color-text-muted);
+    line-height: 1.5;
+}
+
+/* ==========================================================================
+   10. Főoldal — Legkeresettebb termékek (.bestsellers-section)
+   Kategória-szűrés: term_id 15 (natur-kutyakozmetikum) + 43 (kutyasampon) + 31 (kutyaparfüm)
+   H2 stílusa a globális h2 szabályból jön (Cormorant/dark-green) — nincs külön CSS rá.
+   ========================================================================== */
+
+/* Külső szekció: alignfull gondoskodik a teljes szélességről */
+.bestsellers-section {
+    background: var(--color-cream);
+    padding:    60px 1.5rem;
+}
+
+/* H2 és alcím: max-width 1200px, középre — azonos a többi szekció konténerével */
+.bestsellers-section > .wp-block-heading,
+.bestsellers-section > p {
+    max-width:     1200px;
+    margin-inline: auto;
+}
+
+/* H2 szín: Blocksy .wp-block-heading szabálya magasabb specificitású (0,1,0) mint
+   a globális h2 (0,0,1), ezért felülírhatja. !important-tal fixáljuk. */
+.bestsellers-section .wp-block-heading {
+    color: var(--color-dark) !important;
+}
+
+/* Alcím: layout — font/szín a közös 8a blokkban */
+.bestsellers-section > p {
+    margin-bottom: 40px;
+}
+
+/* Termék-kollekció: max-width 1200px, középre.
+   A product-collection blokk közvetlenül <ul>-t renderel — nincs
+   .wp-block-woocommerce-product-collection wrapper div. */
+.bestsellers-section .wc-block-product-template__responsive {
+    max-width:     1200px;
+    margin-inline: auto;
+    width:         auto; /* WooCommerce/WP layout esetleg 100%-ot ad; semlegesítjük */
+}
+
+/* Termék-kártya: fehér lap, 16px sarok (= category-cards), azonos keret/árnyék.
+   display:flex + flex-direction:column → gomb minden kártyán alulra rögzül */
+.bestsellers-section .wc-block-product-template li.wc-block-product,
+.bestsellers-section ul.products li.product {
+    background:     #ffffff;
+    border:         1px solid #E8E0D5;
+    border-radius:  16px;
+    box-shadow:     0 6px 22px rgba(15, 79, 74, 0.06);
+    overflow:       hidden;
+    transition:     transform var(--dd-dur-enter) var(--dd-ease-out), box-shadow var(--dd-dur-enter) var(--dd-ease-out);
+    list-style:     none;
+    margin:         0;
+    padding:        0;
+    display:        flex;
+    flex-direction: column;
+}
+
+.bestsellers-section .wc-block-product-template li.wc-block-product:hover,
+.bestsellers-section ul.products li.product:hover {
+    transform:  translateY(-4px);
+    box-shadow: 0 12px 30px rgba(15, 79, 74, 0.12);
+}
+
+/* Kép-konténer: flex: 0 0 auto — a flex column kártyában ne nyúljon el */
+.bestsellers-section .wc-block-components-product-image {
+    flex: 0 0 auto;
+}
+
+/* Kép: teljes szélességű */
+.bestsellers-section .wc-block-woocommerce-product-image img,
+.bestsellers-section ul.products li.product a > img {
+    display: block;
+    width:   100%;
+    margin:  0;
+}
+
+/* Termék cím: core/post-title blokkot használunk (nem woocommerce/product-title,
+   mert annak "ancestor" megkötése van → nem renderel product-collection-ben) */
+.bestsellers-section .wp-block-post-title {
+    color:          var(--color-dark) !important;
+    font-family:    var(--font-body);
+    font-weight:    600;
+    font-size:      18px;
+    line-height:    1.3;
+    min-height:     calc(18px * 1.3 * 2); /* 2 sor: 18×1.3×2=46.8px — 1 soros cím is 2 sort foglal */
+    padding-inline: 16px;
+    margin:         12px 0 6px;
+}
+.bestsellers-section .wp-block-post-title a {
+    color:           inherit;
+    text-decoration: none;
+}
+
+/* Ár: primary szín — WC Blocks nem használ <bdi>-t, közvetlenül .woocommerce-Price-amount-ra */
+.bestsellers-section .wc-block-components-product-price .woocommerce-Price-amount,
+.bestsellers-section .price > .woocommerce-Price-amount {
+    color:       var(--color-primary-strong);
+    font-weight: 600;
+}
+
+/* Akciós ár: áthúzott halvány + ins-ben primary */
+.bestsellers-section del .woocommerce-Price-amount { color: var(--color-text-muted); font-weight: 400; }
+.bestsellers-section ins .woocommerce-Price-amount { color: var(--color-primary-strong); text-decoration: none; }
+
+/* Ár-blokk padding */
+.bestsellers-section .wc-block-components-product-price,
+.bestsellers-section .price {
+    padding-inline: 16px;
+    margin-bottom:  10px;
+    display:        block;
+}
+
+/* Kosárba gomb */
+.bestsellers-section .add_to_cart_button,
+.bestsellers-section .wp-block-button__link {
+    display:         block;
+    width:           calc(100% - 32px);
+    margin:          10px 16px 16px;
+    padding:         10px 12px;
+    background:      var(--color-primary-strong);
+    color:           var(--color-cream) !important;
+    border:          none;
+    border-radius:   4px;
+    font-family:     var(--font-body);
+    font-weight:     600;
+    font-size:       14px;
+    text-align:      center;
+    text-decoration: none;
+    white-space:     normal;
+    box-sizing:      border-box;
+    transition:      background var(--dd-dur-enter) var(--dd-ease-out);
+    cursor:          pointer;
+}
+
+.bestsellers-section .add_to_cart_button:hover,
+.bestsellers-section .wp-block-button__link:hover {
+    background: var(--color-primary-stronger);
+    color:      var(--color-cream) !important;
+}
+
+/* Gomb wrapper: margin-top:auto → a flex column kártyában a gomb a kártya aljára rögzül,
+   függetlenül a cím sorainak számától */
+.bestsellers-section .wc-block-components-product-button {
+    margin-top: auto;
+}
+
+/* Tablet: 2×2 — shrinkColumns:true esetén a <ul> osztálya wc-block-product-template__responsive,
+   NEM is-flex-container (az csak shrinkColumns:false esetén jelenik meg) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .bestsellers-section .wc-block-product-template__responsive li.wc-block-product,
+    .bestsellers-section ul.products.columns-4 li.product {
+        flex-basis: calc(50% - 12px) !important;
+        max-width:  calc(50% - 12px) !important;
+        width:      calc(50% - 12px) !important;
+    }
+}
+
+/* Mobil: 1 oszlop */
+@media (max-width: 767px) {
+    .bestsellers-section {
+        padding: 40px 1rem;
+    }
+    .bestsellers-section .wc-block-product-template__responsive li.wc-block-product,
+    .bestsellers-section ul.products.columns-4 li.product {
+        flex-basis: 100% !important;
+        max-width:  100% !important;
+        width:      100% !important;
+    }
+}
+
+/* ==========================================================================
+   11. Főoldal — Miért a DebbieDogtól? (.why-section)
+   ========================================================================== */
+
+.why-section {
+    background: var(--color-cream);
+    padding:    60px 1.5rem;
+}
+
+/* Belső oszlopok: max-width 1200px, középre, szöveg+kép vertikálisan center */
+.why-section .why-section__cols {
+    max-width:     1200px;
+    margin-inline: auto;
+    align-items:   center;
+    gap:           48px;
+}
+
+/* H2: !important, mert Blocksy .wp-block-heading-re palette-1 (primary/türkíz) erősebb */
+.why-section .wp-block-heading {
+    color:       var(--color-dark) !important;
+    font-size:   clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 600;
+    text-align:  left;
+}
+
+/* Bekezdések: .wp-block-column.why-text-col p (0,3,1 spec.) — wp:paragraph <p> class nélkül renderelődik */
+.why-section .wp-block-column.why-text-col p {
+    color:       var(--color-text-body);
+    font-size:   clamp(1.15rem, 1.3vw, 1.25rem);   /* ~18px -> 20px FHD-n, jól láthatóan nagyobb a 16px-es hero alszövegnél */
+    line-height: 1.7;
+}
+
+/* Kép: 4:3 arány, object-fit:cover, 14px sarok, kártya-árnyék */
+.why-section .why-img-col .wp-block-image img {
+    display:       block;
+    width:         100%;
+    height:        auto;
+    aspect-ratio:  4 / 3;
+    object-fit:    cover;
+    border-radius: 14px;
+    box-shadow:    0 6px 22px rgba(15, 79, 74, 0.06);
+}
+
+/* Tablet + mobil: kép a szöveg ALÁ */
+@media (max-width: 1024px) {
+    .why-section .why-section__cols {
+        flex-direction: column !important;
+        flex-wrap:      wrap !important;
+    }
+    .why-section .why-text-col,
+    .why-section .why-img-col {
+        flex-basis: 100% !important;
+        max-width:  100% !important;
+        width:      100% !important;
+    }
+}
+
+@media (max-width: 767px) {
+    .why-section {
+        padding: 40px 1rem;
+    }
+}
+
+/* ==========================================================================
+   12. Főoldal — Márkáink (.brands-section)
+   ========================================================================== */
+
+.brands-section {
+    background: var(--color-cream);
+    padding:    60px 1.5rem;
+}
+
+/* H2 és alcím: max-width 1200px, középre */
+.brands-section > .wp-block-heading,
+.brands-section > p {
+    max-width:     1200px;
+    margin-inline: auto;
+}
+
+/* H2 szín explicit (Blocksy override) */
+.brands-section .wp-block-heading {
+    color: var(--color-dark) !important;
+}
+
+/* Alcím: layout — font/szín a közös 8a blokkban */
+.brands-section > p {
+    margin-bottom: 40px;
+}
+
+/* Logósor: 4 cella, chip, object-fit:contain, max 70px magas */
+.brands-logos {
+    display:               grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap:                   32px;
+    max-width:             1200px;
+    margin-inline:         auto;
+    align-items:           center;
+}
+
+.brands-logo-item {
+    display:         flex;
+    align-items:     center;
+    justify-content: center;
+    min-height:      80px;
+    padding:         8px 16px;
+}
+
+.brands-logo-item img {
+    display:    block;
+    max-width:  100%;
+    max-height: 64px;
+    width:      auto;
+    height:     auto;
+    object-fit: contain;
+}
+
+/* AYF — álló (portrait 0.83:1), optikai kiegyenlítés: több magasság kell */
+.brands-logo-item:first-child img {
+    max-height: 88px;
+}
+
+/* Tablet: 2×2 */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .brands-logos {
+        grid-template-columns: repeat(2, 1fr);
+        gap:                   24px;
+    }
+}
+
+/* Mobil: 2×2 */
+@media (max-width: 767px) {
+    .brands-section {
+        padding: 40px 1rem;
+    }
+    .brands-logos {
+        grid-template-columns: repeat(2, 1fr);
+        gap:                   20px;
+    }
+}
+
+/* ==========================================================================
+   9. Akciók menüpont — korall pill kiemelés
+   .menu-akciok = "Akciók" (debbiedog-fomenu #257). A CSS-osztályt a Megjelenés → Menük
+   képernyőn kell a menüelemhez rendelni (CSS-osztályok mező). A `.menu-item-11034` csak a lokális
+   átmenetet fedi: a menüelem ID-je élesen más lesz, ezért élesítés előtt az osztályt be kell állítani,
+   utána a `.menu-item-11034` sorok törölhetők.
+   ========================================================================== */
+
+/* A <li> ne nyújtsa ki a linket — Blocksy alapból align-items:stretch-et használ */
+.menu-akciok,
+.menu-item-11034 {
+    display:     flex !important;
+    align-items: center !important;
+}
+
+/* Kompakt pill az <a>-ra, nem a teljes <li> magasságra.
+   Szöveg: sötét türkiz a koralon (5,97:1) — a krém szöveg csak 2,10:1 volt. */
+.menu-akciok > a,
+.menu-item-11034 > a {
+    background:    var(--color-coral);
+    color:         var(--color-on-coral) !important;
+    padding:       6px 14px;
+    border-radius: 6px;
+    display:       inline-flex !important;
+    align-items:   center;
+    align-self:    center;
+    height:        auto !important;  /* Blocksy height:100% override */
+    line-height:   normal;
+    transition:    background var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+.menu-akciok > a:hover,
+.menu-item-11034 > a:hover {
+    background: #d98668;
+    color:      var(--color-on-coral) !important;   /* 4,83:1 a hover koralon */
+}
+
+/* Keskenyebb laptop-szélességen (kb. 1000–1180 px) a főmenü utolsó eleme (Blog) a kereső-ikon alá nyúlna:
+   a menüpontok oldalsó térköze itt kisebb (a mobil fejléc 1000 px alatt lép be, ott nincs hatása). */
+@media (max-width: 1180px) {
+    header [data-id="menu"] > ul > li > a {
+        padding-left:  7px !important;
+        padding-right: 7px !important;
+    }
+}
+
+/* ==========================================================================
+   10. Footer — Blocksy Footer Builder, mély türkiz háttér, krém szöveg (8,78:1)
+   Az elrendezés (3 oszlop + alsó sor) az adatbázisban él: deploy/footer-setup.php építi fel.
+   A Blocksy a saját szabályait [data-footer*="type-1"] .ct-footer alatt adja, ezért itt az
+   #footer azonosító adja a szükséges erősebb specificitást.
+   ========================================================================== */
+
+#footer.ct-footer {
+    --theme-text-color:          var(--color-cream);
+    --theme-headings-color:      var(--color-cream);
+    --theme-link-initial-color:  var(--color-cream);
+    --theme-link-hover-color:    var(--color-pastel);   /* 6,8:1 a mély türkizen */
+    --theme-icon-color:          var(--color-cream);
+    --theme-icon-hover-color:    var(--color-pastel);
+
+    background-color: var(--color-dark);
+    color:            var(--color-cream);
+}
+
+#footer.ct-footer .widget-title {
+    --theme-font-size: 1.75rem;
+    margin-bottom:     1rem;
+    letter-spacing:    0;
+    text-transform:    none;
+}
+
+/* Linkoszlopok: egymás alatt, kényelmes (24 px feletti) érintési felület */
+#footer.ct-footer .widget-menu {
+    list-style: none;
+    margin:     0;
+    padding:    0;
+}
+
+#footer.ct-footer .widget-menu li {
+    margin: 0;
+}
+
+#footer.ct-footer .widget-menu a {
+    display:         inline-block;
+    padding:         0.3rem 0;
+    text-decoration: none;
+}
+
+#footer.ct-footer .widget-menu a:hover,
+#footer.ct-footer .textwidget a:hover,
+#footer.ct-footer [data-id="menu"] a:hover {
+    text-decoration: underline;
+}
+
+/* Hírlevél + kapcsolat oszlop */
+#footer.ct-footer .textwidget a {
+    text-decoration: underline;
+}
+
+/* Hírlevél-gomb: ugyanaz a zöld, 4 px-es gomb, mint a webshop többi gombja (krém szöveg 4,82:1; hover 6,99:1).
+   A mély türkiz háttéren a zöld kitöltés önmagában halvány (1,8:1), ezért pasztell keret adja az élét. */
+#footer.ct-footer .textwidget a.footer-cta {
+    display:         inline-block;
+    padding:         0.65rem 1.5rem;
+    border:          1px solid var(--color-pastel);
+    border-radius:   4px;
+    background:      var(--color-primary-strong);
+    color:           var(--color-cream);
+    font-weight:     600;
+    text-decoration: none;
+    transition:      background var(--dd-dur-enter) var(--dd-ease-out), box-shadow var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+#footer.ct-footer .textwidget a.footer-cta:hover {
+    background:      var(--color-primary-stronger);
+    color:           var(--color-cream);
+    text-decoration: none;
+    box-shadow:      0 0 0 2px rgba(184, 224, 218, .45);
+}
+
+#footer.ct-footer .footer-contact {
+    margin-top: 1rem;
+}
+
+/* Közösségi ikonok: a 15 px-es ikon köré padding, hogy az érintési felület legalább 24 px legyen
+   (WCAG 2.2 2.5.8); a negatív margó tartja az ikont a szöveg bal élén. */
+#footer.ct-footer .ct-footer-socials {
+    margin-top:  0.5rem;
+    margin-left: -0.5rem;
+}
+
+#footer.ct-footer .ct-footer-socials a {
+    padding: 0.5rem;
+}
+
+/* Alsó sor: finom elválasztó, másolat bal oldalt, jogi link jobb oldalt */
+#footer.ct-footer [data-row*="bottom"] {
+    border-top: 1px solid rgba(250, 247, 242, 0.18);
+}
+
+#footer.ct-footer [data-id="copyright"] {
+    --theme-font-size: 0.875rem;
+}
+
+#footer.ct-footer [data-id="menu"] ul {
+    --theme-text-transform: none;
+    --theme-font-weight:    400;
+    --theme-font-size:      0.875rem;
+}
+
+#footer.ct-footer [data-column="menu"] {
+    justify-self: end;
+}
+
+/* A jogi link ne a Blocksy 12,5 px-es oldalsó paddingjával lógjon, és legyen 24 px feletti;
+   a Blocksy a link paddingját -12,5 px-es margóval ellensúlyozza, ezt is nullázni kell */
+#footer.ct-footer [data-id="menu"] .menu {
+    margin-inline: 0;
+}
+
+#footer.ct-footer [data-id="menu"] .ct-menu-link {
+    padding: 0.4rem 0;
+}
+
+/* Sötét háttéren a fókuszgyűrű legyen világos (a globális sötét gyűrű itt nem látszana) */
+#footer.ct-footer :where(a, button):focus-visible {
+    outline-color: var(--color-cream);
+    box-shadow:    none;
+}
+
+/* Tablet és mobil: a két linkoszlop egymás mellett, a hírlevél oszlop teljes szélességben alatta */
+@media (max-width: 999px) {
+    #footer.ct-footer [data-row*="middle"] > div {
+        column-gap: 1.5rem;
+        row-gap:    2rem;
+    }
+
+    #footer.ct-footer [data-column="widget-area-3"] {
+        grid-column: 1 / -1;
+    }
+
+    #footer.ct-footer [data-row*="bottom"] > div {
+        row-gap: 0.25rem;
+    }
+
+    #footer.ct-footer [data-column="menu"] {
+        justify-self: start;
+    }
+}
+
+/* ==========================================================================
+   14. Bolt, kategória, címke — Blocksy terméklista a főoldali kártyák nyelvén
+   Az archívum sablonja a Blocksy (az Elementor "Products Archive" némítva, lásd functions.php).
+   A kártya ugyanaz, mint a főoldalon: fehér lap, 16 px sarok, finom keret és árnyék, azonos gomb.
+   A fejléc elemeit (morzsamenü, cím, leírás) a deploy/shop-setup.php állítja.
+   ========================================================================== */
+
+/* Oldalfejléc: morzsamenü, cím és leírás középen; a Blocksy 250 px-es minimális magassága helyett tömörebb */
+body .hero-section[data-type="type-2"] {
+    --min-height:        0px;
+    --container-padding: 2rem 0 1rem;
+}
+
+/* A kategóriakép (Blocksy hero-háttér) fotótól függően olvashatatlanná tenné a címet; az oldal fejléce
+   egységesen sima krém marad. */
+.hero-section[data-type="type-2"] > figure {
+    display: none;
+}
+
+.hero-section[data-type="type-2"] .page-description {
+    max-width:     46rem;
+    margin-inline: auto;
+    color:         var(--color-text-body);
+}
+
+.hero-section[data-type="type-2"] .ct-breadcrumbs {
+    justify-content: center;
+    font-size:       0.875rem;
+}
+
+/* Eszköztár: találatszám és rendezés */
+.woo-listing-top {
+    align-items:   center;
+    margin-bottom: 1.5rem;
+}
+
+.woo-listing-top .woocommerce-result-count {
+    color:          var(--color-text-muted);
+    font-size:      0.875rem;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+.woo-listing-top .woocommerce-ordering select {
+    min-height:    44px;
+    border:        1px solid var(--color-border);
+    border-radius: 8px;
+    background:    #ffffff;
+    color:         var(--color-text-body);
+}
+
+/* Rács: asztalin 4, tableten 3 (Blocksy alap), mobilon 2 oszlop */
+@media (max-width: 689.98px) {
+    body [data-products],
+    body .related [data-products],
+    body .upsells [data-products] {
+        --shop-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+/* Kártya */
+[data-products] .product {
+    display:        flex;
+    flex-direction: column;
+    background:     #ffffff;
+    border:         1px solid #E8E0D5;
+    border-radius:  16px;
+    box-shadow:     0 6px 22px rgba(15, 79, 74, 0.06);
+    overflow:       hidden;
+    transition:     transform var(--dd-dur-enter) var(--dd-ease-out), box-shadow var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+[data-products] .product:hover {
+    transform:  translateY(-4px);
+    box-shadow: 0 12px 30px rgba(15, 79, 74, 0.12);
+}
+
+[data-products] .product figure {
+    --product-element-spacing: 14px;
+    margin-bottom:             0;
+}
+
+[data-products] .product > :not(figure) {
+    padding-inline: 16px;
+}
+
+[data-products] .woocommerce-loop-product__title {
+    --theme-font-weight: 600;
+    --theme-font-size:   1.125rem;
+    --theme-line-height: 1.3;
+    font-size:           1.125rem;
+    line-height:         1.3;
+    min-height:          calc(1.125rem * 1.3 * 2);   /* 2 sor: a gombok minden kártyán egy vonalban */
+    font-family:         var(--font-body);
+    hyphens:             auto;                       /* hosszú szavak (pl. "Ezüstkolloidos") ne törjenek csúnyán */
+    overflow-wrap:       break-word;
+}
+
+[data-products] .woocommerce-loop-product__title,
+[data-products] .woocommerce-loop-product__title a {
+    color:           var(--color-dark);
+    text-decoration: none;
+}
+
+[data-products] .product .price {
+    color:       var(--color-primary-strong);
+    font-weight: 600;
+}
+
+[data-products] .product .price del,
+[data-products] .product .price del .woocommerce-Price-amount {
+    color:       var(--color-text-muted);
+    font-weight: 400;
+}
+
+[data-products] .product .price ins {
+    color:           var(--color-primary-strong);
+    text-decoration: none;
+}
+
+/* Kategória-címke a kártyán: halvány, kisbetűs méret */
+[data-products] .product .entry-meta {
+    --theme-font-size:      0.75rem;
+    --theme-link-initial-color: var(--color-text-muted);
+}
+
+/* Gomb: a kártya aljára rögzül, azonos a főoldali "Kosárba teszem" gombbal */
+[data-products] .product .button {
+    display:         block;
+    width:           calc(100% - 32px);
+    min-height:      44px;
+    margin:          auto 16px 16px;
+    padding:         10px 12px;
+    background:      var(--color-primary-strong);
+    color:           var(--color-cream);
+    border:          2px solid var(--color-primary-strong);
+    border-radius:   4px;
+    font-weight:     600;
+    font-size:       0.875rem;
+    text-align:      center;
+    text-decoration: none;
+    box-sizing:      border-box;
+    transition:      background var(--dd-dur-enter) var(--dd-ease-out), border-color var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+[data-products] .product .button:hover {
+    background:   var(--color-primary-stronger);
+    border-color: var(--color-primary-stronger);
+    color:        var(--color-cream);
+}
+
+/* Nem rendelhető termék: kontúros gomb, hogy ne tűnjön elsődleges lépésnek */
+[data-products] .product.outofstock .button {
+    background: transparent;
+    color:      var(--color-primary-strong);
+}
+
+[data-products] .product.outofstock .button:hover {
+    background: var(--color-primary-strong);
+    color:      var(--color-cream);
+}
+
+/* Címkék: akció korall (5,97:1), elfogyott sötét */
+.onsale,
+.ct-woo-badge-sale {
+    --badge-background-color: var(--color-coral);
+    --badge-text-color:       var(--color-on-coral);
+}
+
+/* Lapozó: 44 px-es érintési felület, az aktuális oldal sötét türkiz */
+.ct-pagination .page-numbers {
+    display:         inline-flex;
+    align-items:     center;
+    justify-content: center;
+    min-width:       44px;
+    min-height:      44px;
+    border-radius:   8px;
+}
+
+.ct-pagination .page-numbers.current {
+    background: var(--color-dark);
+    color:      var(--color-cream);
+}
+
+@media (max-width: 689.98px) {
+    [data-products] .woocommerce-loop-product__title {
+        --theme-font-size: 0.9375rem;
+        font-size:         0.9375rem;
+        min-height:        calc(0.9375rem * 1.3 * 2);
+    }
+
+    [data-products] .product > :not(figure) {
+        padding-inline: 12px;
+    }
+
+    [data-products] .product .button {
+        width:       calc(100% - 24px);
+        margin:      auto 12px 12px;
+        padding:     10px 4px;
+        font-size:   0.8125rem;
+        line-height: 1.25;
+    }
+}
+
+/* ==========================================================================
+   15. Termékoldal — Blocksy egyedi termékoldal a főoldal nyelvén
+   Az Elementor termékoldal-sablonok némítva vannak (functions.php), a kinézet a Blocksyé.
+   ========================================================================== */
+
+.single-product .entry-summary .entry-title {
+    --theme-font-size: clamp(1.7rem, 3vw, 2.2rem);
+    color:             var(--color-dark);
+}
+
+/* Ár: akadálymentes türkiz, akciónál az eredeti ár halványan áthúzva */
+.single-product .entry-summary .price {
+    --theme-font-size:   1.5rem;
+    --theme-font-weight: 600;
+    color:               var(--color-primary-strong);
+}
+
+.single-product .entry-summary .price del,
+.single-product .entry-summary .price del .woocommerce-Price-amount {
+    color:       var(--color-text-muted);
+    font-weight: 400;
+}
+
+.single-product .entry-summary .price ins {
+    color:           var(--color-primary-strong);
+    text-decoration: none;
+}
+
+/* Galéria: fehér lap, 16 px sarok, mint a terméklista kártyái */
+.single-product .woocommerce-product-gallery {
+    background:    #ffffff;
+    border:        1px solid #E8E0D5;
+    border-radius: 16px;
+    overflow:      hidden;
+}
+
+/* Kosárba gomb: azonos a lista és a főoldal gombjával */
+.single-product .single_add_to_cart_button {
+    border-radius: 4px;
+    font-weight:   600;
+    background:    var(--color-primary-strong);
+    color:         var(--color-cream);
+    transition:    background var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+.single-product .single_add_to_cart_button:hover {
+    background: var(--color-primary-stronger);
+    color:      var(--color-cream);
+}
+
+/* Fülek tartalma: fehér lap, 16 px sarok */
+.single-product .woocommerce-tabs .woocommerce-Tabs-panel {
+    background:    #ffffff;
+    border:        1px solid #E8E0D5;
+    border-radius: 16px;
+    padding:       1.5rem;
+}
+
+/* Készlet: a "készleten" üzenet türkiz, az elfogyott sötét (nem színnel egyedül jelzi: szöveg is van) */
+.single-product .stock.in-stock {
+    color:       var(--color-primary-strong);
+    font-weight: 600;
+}
+
+/* Mobil: az egyszerű termék kosárba gombja alul ragad (a változatos termékeknél a választók miatt nem) */
+@media (max-width: 689.98px) {
+    .single-product .product-type-simple form.cart {
+        position:      sticky;
+        bottom:        0;
+        z-index:       20;
+        margin:        0 -1rem;
+        padding:       0.75rem 1rem;
+        background:    #ffffff;
+        border-top:    1px solid #E8E0D5;
+        box-shadow:    0 -6px 18px rgba(15, 79, 74, 0.08);
+    }
+}
+
+/* ==========================================================================
+   16. Kosár — összesítő, kupon, ingyenes szállítás sáv
+   A kosár a Blocksy saját sablonján fut; a funnel-pluginok kikapcsolva (docs/plugin-naplo.md).
+   ========================================================================== */
+
+/* Ingyenes szállítás sáv: szöveg + sáv; a szöveg közli az információt, a sáv csak kiegészítés */
+.free-shipping-bar {
+    margin-bottom: 1rem;
+}
+
+.free-shipping-bar__text {
+    margin:      0 0 0.5rem;
+    color:       var(--color-dark);
+    font-weight: 600;
+    font-size:   0.9375rem;
+}
+
+.free-shipping-bar__track {
+    height:        8px;
+    border-radius: 999px;
+    background:    var(--color-border);
+    overflow:      hidden;
+}
+
+.free-shipping-bar__fill {
+    display:       block;
+    height:        100%;
+    border-radius: 999px;
+    background:    var(--color-primary-strong);
+    transition:    width var(--dd-dur-slide) var(--dd-ease-out);
+}
+
+/* Összesítő és kupon: fehér lap, 16 px sarok, mint a többi kártya */
+body .ct-woocommerce-cart-form .cart_totals {
+    --cart-totals-border: 1px solid #E8E0D5;
+    background:           #ffffff;
+    border-radius:        16px;
+}
+
+.woocommerce-cart-form .coupon .button,
+.cart_totals .checkout-button {
+    border-radius: 4px;
+    font-weight:   600;
+}
+
+/* "Kosár frissítése" másodlagos gomb: kontúros, hogy a pénztárra vezető gomb maradjon az elsődleges */
+body .woocommerce-cart-form button[name="update_cart"] {
+    background: transparent;
+    color:      var(--color-primary-strong);
+    border:     2px solid var(--color-primary-strong);
+}
+
+body .woocommerce-cart-form button[name="update_cart"]:hover:not(:disabled) {
+    background: var(--color-primary-strong);
+    color:      var(--color-cream);
+}
+
+/* Nincs módosítás: halványabb, de a szöveg kontrasztja (letiltott elem) nem követelmény; a funkció egyértelmű */
+body .woocommerce-cart-form button[name="update_cart"]:disabled {
+    opacity: 0.55;
+}
+
+/* ==========================================================================
+   17. Űrlapok és pénztár — fehér, jól látható keretű mezők (WCAG 2.2: 1.4.11 és 2.5.8)
+   A Blocksy űrlapváltozóit írjuk át, így a pénztár, a fiók és a kereső mezői egységesek.
+   A keret #857E70: 4,0:1 a fehéren és 3,7:1 a krémen (min. 3:1 kell).
+   ========================================================================== */
+
+:root {
+    --theme-form-field-border-initial-color:       #857E70;
+    --theme-form-field-border-focus-color:         var(--color-primary-strong);
+    --theme-form-field-background-initial-color:   #ffffff;
+    --theme-form-field-background-focus-color:     #ffffff;
+    --theme-form-field-height:                     48px;
+    --theme-form-field-border-radius:              8px;
+    --theme-form-selection-field-initial-color:    #857E70;
+    --theme-form-selection-field-active-color:     var(--color-primary-strong);
+}
+
+/* A kötelező mező csillagja: sötét piros (7,5:1 a krémen), nem halvány */
+.woocommerce form .required,
+.woocommerce-page form .required {
+    color: #B42318;
+}
+
+/* Pénztár: a rendelés-összesítő fehér lap, a "Megrendelem" gomb elsődleges és nagy */
+body .ct-order-review {
+    --order-review-border: 1px solid #E8E0D5;
+    background:            #ffffff;
+    border-radius:         16px;
+}
+
+body #place_order {
+    min-height:    56px;
+    border-radius: 4px;
+    font-weight:   600;
+    font-size:     1rem;
+    background:    var(--color-primary-strong);
+    color:         var(--color-cream);
+}
+
+body #place_order:hover {
+    background: var(--color-primary-stronger);
+}
+
+/* ==========================================================================
+   18. Fiók és regisztráció — belépés/regisztráció, előnyök, fiók-navigáció
+   ========================================================================== */
+
+.account-benefits {
+    margin-bottom: 1.25rem;
+    padding:       1rem 1.25rem;
+    background:    #ffffff;
+    border:        1px solid #E8E0D5;
+    border-radius: 16px;
+}
+
+.account-benefits__title {
+    margin:      0 0 0.5rem;
+    color:       var(--color-dark);
+    font-family: var(--font-heading);
+    font-weight: 600;
+    font-size:   1.25rem;
+}
+
+.account-benefits__list {
+    margin:     0;
+    padding:    0 0 0 1.1rem;
+    color:      var(--color-text-body);
+    font-size:  0.9375rem;
+}
+
+/* Belépés / regisztráció gombok: azonos az üzlet többi elsődleges gombjával */
+.woocommerce-form-login__submit,
+.woocommerce-form-register__submit {
+    min-height:    48px;
+    border-radius: 4px;
+    font-weight:   600;
+}
+
+/* Fiók-navigáció (belépve): fehér lap, az aktív pont sötét türkiz */
+.woocommerce-MyAccount-navigation ul {
+    background:    #ffffff;
+    border:        1px solid #E8E0D5;
+    border-radius: 16px;
+    overflow:      hidden;
+}
+
+.woocommerce-MyAccount-navigation li.is-active a {
+    background: var(--color-dark);
+    color:      var(--color-cream);
+}
+
+/* ==========================================================================
+   19. 404-es oldal, blog és egyszerű oldalak (Rólunk, Kapcsolat)
+   ========================================================================== */
+
+/* Oldalcím (h1) nagyobb a tartalmi h2-nél: a Blocksy 30 px-es alapja kisebb volt a globális h2-nél */
+body[data-prefix] .entry-header .page-title {
+    --theme-font-size: clamp(2rem, 4vw, 2.6rem);
+}
+
+/* Egyszerű oldalak tartalmi h2-je (közvetlen gyerek, így a főoldal blokkjait nem érinti) */
+.entry-content > h2.wp-block-heading {
+    --theme-font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+    font-size:         clamp(1.4rem, 2.5vw, 1.8rem);
+    margin-top:        2rem;
+}
+
+/* 404: a hasznos linkek gombszerű sorban a kereső alatt */
+.not-found-links {
+    display:         flex;
+    flex-wrap:       wrap;
+    gap:             0.5rem;
+    margin:          2rem 0 0;
+    padding:         0;
+    list-style:      none;
+    justify-content: center;
+}
+
+.not-found-links a {
+    display:         inline-flex;
+    align-items:     center;
+    min-height:      44px;
+    padding:         0.5rem 1rem;
+    background:      #ffffff;
+    border:          1px solid #E8E0D5;
+    border-radius:   999px;
+    color:           var(--color-primary-strong);
+    font-weight:     600;
+    text-decoration: none;
+}
+
+.not-found-links a:hover {
+    background: var(--color-primary-strong);
+    border-color: var(--color-primary-strong);
+    color:      var(--color-cream);
+}
+
+/* Blog-kártyák: a terméklista kártyáinak nyelvén (fehér lap, 16 px sarok, finom keret) */
+[data-prefix="blog"] .entry-card,
+[data-prefix="categories"] .entry-card {
+    border:        1px solid #E8E0D5;
+    border-radius: 16px;
+    overflow:      hidden;
+}
+
+[data-prefix="blog"] .entry-card .entry-title a,
+[data-prefix="categories"] .entry-card .entry-title a {
+    color: var(--color-dark);
+}
+
+/* ==========================================================================
+   13. Akadálymentesség — látható fókusz és csökkentett mozgás
+   ========================================================================== */
+
+/* Billentyűs navigációnál látszódjon, hol áll a fókusz (a krém háttéren és a fehér kártyán is
+   legalább 8,78:1); a sötét top bar-on világos gyűrű. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline:        3px solid var(--color-dark);
+    outline-offset: 2px;
+    box-shadow:     0 0 0 2px var(--color-cream);
+}
+
+.site-header [data-row*="top"] :where(a, button):focus-visible {
+    outline-color: var(--color-cream);
+    box-shadow:    none;
+}
+
+/* Ha a rendszerben csökkentett mozgás van kérve: nincs átmenet és hover-emelkedés.
+   Kivétel: a kipróbálási mód (?motion=on, az <html> kap .dd-force-motion osztályt), amellyel az animációk
+   csökkentett mozgású gépen is megmutathatók; éles látogatónál a rendszer-beállítás az irányadó. */
+@media (prefers-reduced-motion: reduce) {
+    html:not(.dd-force-motion) *,
+    html:not(.dd-force-motion) *::before,
+    html:not(.dd-force-motion) *::after {
+        transition-duration:       0.01ms !important;
+        animation-duration:        0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior:           auto !important;
+    }
+
+    .category-cards__card:hover,
+    [data-products] .product:hover,
+    .bestsellers-section .wc-block-product-template li.wc-block-product:hover,
+    .bestsellers-section ul.products li.product:hover {
+        transform: none;
+    }
+}
+
+/* ==========================================================================
+   20. Érintési felületek — WCAG 2.2 (2.5.8): legalább 24 px, mobilon a hamburger menü 44 px
+   A találati terület a megjelenés változtatása nélkül nő (nincs elrendezés-eltolódás).
+   ========================================================================== */
+
+/* Morzsamenü: a linkek magassága legalább 24 px */
+.ct-breadcrumbs a {
+    display:     inline-flex;
+    align-items: center;
+    min-height:  24px;
+}
+
+/* Fejléc-gombok (hamburger menü, kereső): az ikon 18 px, a kattintható terület 44 px */
+.ct-header-trigger {
+    position: relative;
+}
+
+.ct-header-trigger::after {
+    content:  "";
+    position: absolute;
+    inset:    -13px;
+}
+
+/* Szöveg-kontraszt (WCAG AA, 4,5:1): a termék meta (cikkszám, kategória) és az áthúzott régi ár a Blocksy/WooCommerce
+   alapbeállításában átlátszósággal halványul (.sku 0,7; del 0,5), így 3,5:1, ill. 2,3:1 lett (axe-core). A halvány szöveg
+   márkaszíne krémen 5,09:1, ezért a szín marad és az átlátszóság megszűnik. */
+.product_meta .sku,
+.product_meta .posted_in,
+.product_meta .posted_in a,
+.product_meta .tagged_as,
+.product_meta .tagged_as a,
+.woobt-price del,
+.woobt-price del .amount,
+.woobt-price-ori .sale-price,
+.woobt-price-ori .sale-price del,
+.woobt-price-ori .sale-price del * ,
+.price del,
+.price del .amount,
+body .woobt-products .woobt-product .woobt-price del,
+body.single-product .product .product_meta > span > * {
+    color:   var(--color-text-muted);
+    opacity: 1;
+}
+
+/* Főmenü: aktív/hover szín. A Customizerben beállított #2DA89E krémen csak 2,72:1 (12 px-es félkövér szövegnek kevés),
+   a márka akadálymentes változata 4,82:1. */
+body[data-header*="type-1"] .ct-header [data-id="menu"] > ul > li > a,
+body[data-header*="type-1"] .ct-header [data-id="menu"] .sub-menu .ct-menu-link {
+    --theme-link-hover-color: var(--color-primary-strong);
+}
+
+/* Termékkártya-cím linkje: legalább 24 px magas találati terület (az egy soros cím 19 px volt) */
+.woocommerce-loop-product__title .woocommerce-LoopProduct-link,
+.woocommerce-LoopProduct-link.woocommerce-loop-product__link {
+    display:     inline-flex;
+    align-items: center;
+    min-height:  24px;
+}
+
+/* A szövegben álló linkek ne csak színnel különüljenek el (WCAG 1.4.1): aláhúzás a blog- és oldaltartalomban */
+.single-post .entry-content p a:not([class*="button"]),
+.single-post .entry-content li a:not([class*="button"]),
+.page .entry-content p a:not([class*="button"]):not(.wp-block-button__link),
+.page .entry-content li a:not([class*="button"]):not(.wp-block-button__link) {
+    text-decoration:       underline;
+    text-underline-offset: .16em;
+}
+
+/* ==========================================================================
+   21. Ragadós "Kosárba" sáv — termékoldal, csak mobilon (assets/shop/sticky-atc.js)
+   ========================================================================== */
+
+.dd-sticky-atc {
+    display: none;
+}
+
+@media (max-width: 689.98px) {
+    .dd-sticky-atc:not([hidden]) {
+        display:     flex;
+        align-items: center;
+        gap:         12px;
+        position:    fixed;
+        left:        0;
+        right:       0;
+        bottom:      0;
+        z-index:     90;
+        padding:     10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
+        background:  var(--color-cream);
+        border-top:  1px solid var(--color-border);
+        box-shadow:  0 -6px 20px rgba(15, 79, 74, 0.10);
+    }
+
+    .dd-sticky-atc__info {
+        flex:           1;
+        min-width:      0;
+        display:        flex;
+        flex-direction: column;
+    }
+
+    .dd-sticky-atc__title {
+        overflow:      hidden;
+        text-overflow: ellipsis;
+        white-space:   nowrap;
+        color:         var(--color-dark);
+        font:          600 13px/1.3 var(--font-body);
+    }
+
+    .dd-sticky-atc__price {
+        color: var(--color-text-body);
+        font:  500 13px/1.3 var(--font-body);
+    }
+
+    .dd-sticky-atc__btn {
+        flex:          none;
+        min-height:    44px;
+        padding:       0 20px;
+        border:        0;
+        border-radius: 8px;
+        background:    var(--color-primary-strong);
+        color:         var(--color-cream);
+        font:          600 14px/1 var(--font-body);
+        cursor:        pointer;
+    }
+
+    .dd-sticky-atc__btn:hover {
+        background: var(--color-primary-stronger);
+    }
+}

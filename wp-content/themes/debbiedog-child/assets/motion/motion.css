@@ -1,0 +1,236 @@
+/* Finom mozgás: hangulat-réteg, görgetéses megjelenés, hover-élmények, oldalátmenet.
+   Csak animációt ad a meglévő arculathoz (színek: style.css :root).
+   Csökkentett mozgásnál (a fejléc-szkript ilyenkor az <html>-re teszi a .dd-reduce osztályt) semmi nem animál;
+   a style.css "prefers-reduced-motion" szabálya ezen felül minden átmenetet kikapcsol. */
+
+/* A hangulat-réteg (fx.js: évszak + időjárás, canvas) az oldal MÖGÖTT van: a tartalmat soha nem takarja, csak a háttéren látszik.
+   A krém hátterű szakaszokat a motion.js átlátszóvá teszi (ugyanaz a szín, mint az oldalé), a kártyák, képek, fejléc és lábléc
+   a saját hátterükkel elé kerülnek. A vászon stílusa a loader.css-ben van (.dd-fx--ambient). */
+html.dd-ambient-on .dd-clear {
+    background-color: transparent !important;
+}
+
+/* a körvonalas gombnak krém háttere van, így a mögötte elhaladó effekt nem látszik át rajta */
+html.dd-ambient-on .is-style-outline > .wp-block-button__link:not(:hover):not(:focus-visible) {
+    background-color: var(--color-cream, #FAF7F2);
+}
+
+/* Apró időjárás-jelentés (fx.js) a jobb alsó sarokban: ikon, hőmérséklet, időjárás; csak a bemutatkozó oldalakon.
+   Egy koppintás kapcsolja a hely szerinti időjárást (a böngésző engedélyével), nincs más vezérlő. */
+.dd-wx {
+    position:                fixed;
+    right:                   12px;
+    bottom:                  12px;
+    z-index:                 40;
+    display:                 flex;
+    align-items:             center;
+    gap:                     2px;
+    max-width:               calc(100vw - 24px);
+    padding:                 0 10px 0 2px;
+    border:                  1px solid rgba(184, 224, 218, .28);
+    border-radius:           999px;
+    background:              rgba(15, 79, 74, .82);
+    -webkit-backdrop-filter: blur(10px) saturate(130%);
+    backdrop-filter:         blur(10px) saturate(130%);
+    color:                   var(--color-cream, #FAF7F2);
+    font-family:             var(--font-body, Inter, -apple-system, sans-serif);
+    box-shadow:              0 6px 18px rgba(15, 79, 74, .2);
+}
+
+.dd-wx__btn {
+    display:     inline-flex;
+    align-items: center;
+    gap:         6px;
+    min-height:  30px;
+    padding:     4px 4px 4px 9px;
+    border:      0;
+    border-radius: 999px;
+    background:  transparent;
+    color:       inherit;
+    font:        500 12px/1.2 var(--font-body, Inter, sans-serif);
+    white-space: nowrap;
+    cursor:      pointer;
+}
+
+.dd-wx__btn:hover { color: #fff; }
+.dd-wx__btn:focus-visible,
+.dd-wx__src:focus-visible { outline: 2px solid var(--color-pastel, #B8E0DA); outline-offset: 2px; }
+
+.dd-wx__ico { display: inline-flex; width: 15px; height: 15px; }
+.dd-wx__ico svg { display: block; }
+.dd-wx[data-state="error"] { background: rgba(138, 74, 50, .96); }
+
+.dd-wx__src {
+    padding:         0 2px;
+    color:           var(--color-cream, #FAF7F2);
+    font-size:       11px;
+    line-height:     1.2;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.dd-wx__src[hidden],
+.dd-wx__msg[hidden] { display: none; }
+
+/* az előnézeten (szerver nélkül) a koppintás ezt a rövid magyarázatot adja */
+.dd-wx__msg {
+    position:      absolute;
+    right:         0;
+    bottom:        calc(100% + 8px);
+    width:         min(260px, calc(100vw - 24px));
+    padding:       9px 12px;
+    border-radius: 12px;
+    background:    var(--color-cream, #FAF7F2);
+    color:         var(--color-dark, #0F4F4A);
+    font-size:     12px;
+    line-height:   1.4;
+    box-shadow:    0 8px 22px rgba(15, 79, 74, .22);
+}
+
+@media (max-width: 600px) {
+    .dd-wx { right: 8px; bottom: 8px; }
+}
+
+/* Oldalak közti lágy átfedés (a böngésző támogatásától függ; máshol észrevétlenül kimarad) */
+@media (prefers-reduced-motion: no-preference) {
+    @view-transition {
+        navigation: auto;
+    }
+
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation-duration: var(--dd-dur-enter);
+    }
+}
+
+/* ---------- Görgetéses megjelenés (a szkript csak a képernyőn kívüli elemekre teszi rá a .dd-reveal osztályt) ---------- */
+
+html:not(.dd-reduce) .dd-reveal {
+    opacity:          0;
+    transform:        translate3d(0, 22px, 0);
+    transition:       opacity var(--dd-dur-scene) var(--dd-ease-out), transform var(--dd-dur-scene) var(--dd-ease-out);
+    transition-delay: var(--dd-delay, 0s);
+    will-change:      opacity, transform;
+}
+
+html:not(.dd-reduce) .dd-reveal.dd-in {
+    opacity:     1;
+    transform:   none;
+    will-change: auto;
+}
+
+html:not(.dd-reduce) {
+    scroll-behavior: smooth;
+}
+
+/* ---------- Hover-élmények ---------- */
+
+/* Gombok: finom emelkedés és lenyomás. Az alapállapot a kilépő időzítést adja (gyorsabb, ease-in: a gomb visszaáll),
+   a :hover/:active a belépőt (kicsit lassabb, ease-out: a gomb felemelkedik). */
+html:not(.dd-reduce) :is(.wp-block-button__link, .wp-element-button, .button, .ct-button, .single_add_to_cart_button, .added_to_cart) {
+    transition-property:        background-color, color, border-color, transform, box-shadow;
+    transition-duration:        var(--dd-dur-exit);
+    transition-timing-function: var(--dd-ease-in);
+}
+
+html:not(.dd-reduce) :is(.wp-block-button__link, .wp-element-button, .button, .ct-button, .single_add_to_cart_button, .added_to_cart):is(:hover, :active) {
+    transition-duration:        var(--dd-dur-enter);
+    transition-timing-function: var(--dd-ease-out);
+}
+
+html:not(.dd-reduce) :is(.wp-block-button__link, .wp-element-button, .button, .ct-button, .single_add_to_cart_button):hover {
+    transform:  translateY(-2px);
+    box-shadow: 0 8px 18px rgba(15, 79, 74, .16);
+}
+
+html:not(.dd-reduce) :is(.wp-block-button__link, .wp-element-button, .button, .ct-button, .single_add_to_cart_button):active {
+    transform:  translateY(0) scale(.98);
+    box-shadow: none;
+}
+
+/* Kategóriakártyák és termékképek: a kép lassan közelít a kártya fölött */
+html:not(.dd-reduce) :is(.category-cards__image-wrap, [data-products] .ct-media-container, .bestsellers-section .wc-block-components-product-image) img {
+    transition: transform var(--dd-dur-scene) var(--dd-ease-out);
+}
+
+html:not(.dd-reduce) .category-cards__card:hover .category-cards__image-wrap img,
+html:not(.dd-reduce) [data-products] .product:hover .ct-media-container img,
+html:not(.dd-reduce) .bestsellers-section .wc-block-product:hover .wc-block-components-product-image img {
+    transform: scale(1.05);
+}
+
+[data-products] .ct-media-container,
+.bestsellers-section .wc-block-components-product-image {
+    overflow: hidden;
+}
+
+/* Bizalmi ikonok: ráhúzásra megbillennek */
+html:not(.dd-reduce) .trust-bar__item:hover .trust-bar__icon {
+    animation: dd-wiggle var(--dd-dur-scene) ease-in-out;
+}
+
+/* Márka-logók: ráhúzásra kicsit megemelkednek */
+html:not(.dd-reduce) .brands-section .wp-block-image img {
+    transition: transform var(--dd-dur-enter) var(--dd-ease-out);
+}
+
+html:not(.dd-reduce) .brands-section .wp-block-image:hover img {
+    transform: translateY(-3px) scale(1.04);
+}
+
+/* Ingyenes szállítás sáv: lágy fénycsík fut végig a kitöltésen */
+html:not(.dd-reduce) .free-shipping-bar__fill {
+    position: relative;
+    overflow: hidden;
+}
+
+html:not(.dd-reduce) .free-shipping-bar__fill::after {
+    content:    "";
+    position:   absolute;
+    inset:      0;
+    background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .45) 50%, transparent 70%);
+    transform:  translateX(-100%);
+    animation:  dd-shine 2.6s ease-in-out 1s infinite;
+}
+
+/* Kosár-számláló: kosárba tételkor megugrik (a szkript teszi rá a .dd-bump osztályt) */
+html:not(.dd-reduce) .dd-bump {
+    animation: dd-bump var(--dd-dur-bump) var(--dd-ease-spring);
+}
+
+/* "Kosár megtekintése" link: kipattan */
+html:not(.dd-reduce) .added_to_cart {
+    animation: dd-pop var(--dd-dur-pop) var(--dd-ease-spring);
+}
+
+@keyframes dd-wiggle {
+    0%, 100% { transform: rotate(0); }
+    25%      { transform: rotate(-9deg) scale(1.06); }
+    60%      { transform: rotate(7deg) scale(1.06); }
+}
+
+@keyframes dd-bump {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.5); }
+    100% { transform: scale(1); }
+}
+
+@keyframes dd-pop {
+    from { opacity: 0; transform: translateY(6px) scale(.94); }
+    to   { opacity: 1; transform: none; }
+}
+
+@keyframes dd-shine {
+    0%, 55% { transform: translateX(-100%); }
+    100%    { transform: translateX(100%); }
+}
+
+/* Ragadós "Kosárba" sáv: alulról becsúszik */
+html:not(.dd-reduce) .dd-sticky-atc--on {
+    animation: dd-slide-up var(--dd-dur-slide) var(--dd-ease-out);
+}
+
+@keyframes dd-slide-up {
+    from { transform: translateY(100%); }
+    to   { transform: none; }
+}

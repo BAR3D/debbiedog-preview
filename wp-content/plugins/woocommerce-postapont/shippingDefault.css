@@ -1,0 +1,23 @@
+#GoogleMaps{height:400px;max-width:100%;margin-top:20px}
+.postapont-woocommerce-shipping-fields select{max-width:100%}
+.chosen-container{width:100% !important;}
+#GoogleMapscontent #firstHeading{color: #000000 !important;}
+#GoogleMapscontent #bodyContent{color: #000000 !important;}
+
+.postapont-search-in-mobil-container{
+	width:100% !important;
+	display:none;
+}
+.postapont-search-in-mobil{
+		display:none;
+	}
+/* Smartphone Portrait and Landscape */
+@media only screen and (max-width : 768px){ 
+    .postapont-search-in-mobil{
+		display:block;
+	}
+	
+	.postapont-search-in-mobil-container{
+		display:block;
+	}
+}
