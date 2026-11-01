@@ -101,11 +101,16 @@
 				var gr = x.createLinearGradient(0, 4, 0, 60);
 				gr.addColorStop(0, c1); gr.addColorStop(1, c2);
 				x.fillStyle = gr;
-				x.beginPath();
-				x.moveTo(32, 60); x.bezierCurveTo(6, 44, 3, 16, 22, 6); x.quadraticCurveTo(28, 5, 32, 15); x.quadraticCurveTo(36, 5, 42, 6);
-				x.bezierCurveTo(61, 16, 58, 44, 32, 60); x.closePath(); x.fill();
-				x.strokeStyle = 'rgba(180,90,70,.22)'; x.lineWidth = 1;
-				x.beginPath(); x.moveTo(32, 58); x.lineTo(32, 20); x.moveTo(32, 46); x.lineTo(22, 30); x.moveTo(32, 46); x.lineTo(42, 30); x.stroke();
+				var shp = new Path2D();
+				shp.moveTo(32, 60); shp.bezierCurveTo(6, 44, 3, 16, 22, 6); shp.quadraticCurveTo(28, 5, 32, 15); shp.quadraticCurveTo(36, 5, 42, 6);
+				shp.bezierCurveTo(61, 16, 58, 44, 32, 60); shp.closePath();
+				x.fill(shp);
+				// az erezet a szirom alakjára vágva (nem lóghat ki), finoman elhalványuló ívekkel
+				x.save(); x.clip(shp);
+				x.lineCap = 'round'; x.strokeStyle = 'rgba(180,90,70,.2)'; x.lineWidth = 1;
+				x.beginPath(); x.moveTo(32, 56); x.quadraticCurveTo(32.8, 38, 32, 21); x.moveTo(32, 47); x.quadraticCurveTo(26, 40, 21, 31); x.moveTo(32, 47); x.quadraticCurveTo(38, 40, 43, 31); x.stroke();
+				x.restore();
+				x.strokeStyle = 'rgba(180,90,70,.16)'; x.lineWidth = 0.8; x.stroke(shp);
 			}, 3);
 		}
 		s.petals = [petal('rgba(255,242,236,.97)', 'rgba(232,154,123,.93)'), petal('rgba(244,251,250,.97)', 'rgba(126,203,193,.92)'), petal('rgba(255,228,218,.97)', 'rgba(222,128,98,.92)')];
@@ -113,28 +118,59 @@
 		// levél: sima és juhar, őszi márka-árnyalatokban
 		function leaf(shape, col) {
 			return ladder(96, function (x) {
-				x.translate(48, 48);
-				var gr = x.createLinearGradient(0, -44, 0, 44);
-				gr.addColorStop(0, rgba(mix(col, C.white, 0.3), 0.97)); gr.addColorStop(1, rgba(col, 0.97));
-				x.fillStyle = gr; x.beginPath();
+				x.translate(48, 50);
+				x.lineCap = 'round'; x.lineJoin = 'round';
+				var i, p, shp = new Path2D(), dk = mix(col, C.dark, 0.5), lt = mix(col, C.white, 0.34);
+
+				// a levél körvonala: a töltés, a vágás (erek) és a perem is ezt használja, így semmi nem lóghat ki belőle
 				if (shape === 0) {
-					x.moveTo(0, -42); x.bezierCurveTo(34, -22, 36, 18, 0, 44); x.bezierCurveTo(-36, 18, -34, -22, 0, -42);
+					shp.moveTo(0, -42); shp.bezierCurveTo(33, -24, 35, 14, 0, 38); shp.bezierCurveTo(-35, 14, -33, -24, 0, -42);
 				} else {
-					var i, p;
-					x.moveTo((MAPLE_R[0][0] - 50) * 0.9, (MAPLE_R[0][1] - 50) * 0.9);
-					for (i = 1; i < MAPLE_R.length; i++) { p = MAPLE_R[i]; x.lineTo((p[0] - 50) * 0.9, (p[1] - 50) * 0.9); }
-					for (i = MAPLE_R.length - 2; i >= 1; i--) { p = MAPLE_R[i]; x.lineTo((50 - p[0]) * 0.9, (p[1] - 50) * 0.9); }
+					shp.moveTo((MAPLE_R[0][0] - 50) * 0.84, (MAPLE_R[0][1] - 50) * 0.84 - 2);
+					for (i = 1; i < MAPLE_R.length - 1; i++) { p = MAPLE_R[i]; shp.lineTo((p[0] - 50) * 0.84, (p[1] - 50) * 0.84 - 2); }
+					for (i = MAPLE_R.length - 2; i >= 1; i--) { p = MAPLE_R[i]; shp.lineTo((50 - p[0]) * 0.84, (p[1] - 50) * 0.84 - 2); }
 				}
-				x.closePath(); x.fill();
-				x.lineCap = 'round'; x.strokeStyle = rgba(mix(col, C.dark, 0.45), 0.5); x.lineWidth = 1.5;
+				shp.closePath();
+
+				// alapszín: a csúcs felé világosabb, a nyél felé mélyebb
+				var gr = x.createLinearGradient(0, -42, 0, 40);
+				gr.addColorStop(0, rgba(lt, 0.98)); gr.addColorStop(0.55, rgba(col, 0.98)); gr.addColorStop(1, rgba(mix(col, C.dark, 0.2), 0.98));
+				x.fillStyle = gr; x.fill(shp);
+
+				x.save(); x.clip(shp);
+				// térhatás: a bal fél fényesebb, a jobb fél kissé árnyékosabb
+				x.fillStyle = rgba(C.white, 0.15); x.fillRect(-60, -60, 60, 120);
+				x.fillStyle = rgba(C.dark, 0.08); x.fillRect(0, -60, 60, 120);
+
+				// erek: ívesek, a levélre vágottak, a vékonyabb erek halványabbak
+				x.strokeStyle = rgba(dk, 0.5); x.lineWidth = 1.8;
+				x.beginPath(); x.moveTo(0, 42); x.quadraticCurveTo(1.4, 0, 0, -36); x.stroke();
+				x.strokeStyle = rgba(dk, 0.36); x.lineWidth = 1.05;
 				x.beginPath();
 				if (shape === 0) {
-					x.moveTo(0, 46); x.lineTo(0, -34);
-					for (var v = 0; v < 4; v++) { var yy = 30 - v * 18; x.moveTo(0, yy); x.lineTo(15, yy - 12); x.moveTo(0, yy); x.lineTo(-15, yy - 12); }
+					var hw = function (y) { var t = (y + 42) / 80; return (t <= 0 || t >= 1) ? 0 : 29 * Math.pow(Math.sin(Math.PI * t), 0.8); };
+					for (var v = 0; v < 6; v++) {
+						var y0 = 28 - v * 10.5, y1 = y0 - 15, w1 = hw(y1) * 0.78;
+						x.moveTo(0, y0); x.quadraticCurveTo(w1 * 0.35, y0 - 3, w1, y1);
+						x.moveTo(0, y0); x.quadraticCurveTo(-w1 * 0.35, y0 - 3, -w1, y1);
+					}
 				} else {
-					x.moveTo(0, 46); x.lineTo(0, -40); x.moveTo(0, 22); x.lineTo(36, -2); x.moveTo(0, 22); x.lineTo(-36, -2); x.moveTo(0, 6); x.lineTo(22, -26); x.moveTo(0, 6); x.lineTo(-22, -26);
+					// juhar: a levélnyél tövéből a lebenyek csúcsai felé (a csúcsok 80%-áig)
+					var tips = [[18, -35], [36, -20], [41, 6], [22, 30]];
+					for (i = 0; i < tips.length; i++) {
+						x.moveTo(0, 20); x.quadraticCurveTo(tips[i][0] * 0.3, 8, tips[i][0] * 0.8, tips[i][1] * 0.8 + 3);
+						x.moveTo(0, 20); x.quadraticCurveTo(-tips[i][0] * 0.3, 8, -tips[i][0] * 0.8, tips[i][1] * 0.8 + 3);
+					}
 				}
 				x.stroke();
+				x.restore();
+
+				// finom perem és apró nyél
+				x.strokeStyle = rgba(dk, 0.34); x.lineWidth = 1; x.stroke(shp);
+				// a nyél a levéltest aljából indul (a juharé feljebb ér véget, ott hosszabb a nyél)
+				var sb = shape === 0 ? 37 : 15;
+				x.strokeStyle = rgba(dk, 0.78); x.lineWidth = 2.2;
+				x.beginPath(); x.moveTo(0, sb); x.quadraticCurveTo(1.8, sb + (46 - sb) * 0.55, -0.8, 46); x.stroke();
 			}, 3);
 		}
 		s.leaves = [leaf(0, C.coral), leaf(1, C.coral), leaf(1, C.deepcoral), leaf(0, C.deepcoral), leaf(1, C.primary), leaf(0, mix(C.dark, C.primary, 0.3)), leaf(1, mix(C.coral, C.pastel, 0.45))];
@@ -1859,5 +1895,5 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 12:34:58 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 12:46:03 -->
 <!-- QUIC.cloud CCSS in queue -->
