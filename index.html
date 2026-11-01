@@ -927,7 +927,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="wp-content/litespeed/css/ea33ae322624dc1972051e2928f26de6.css" />
+<link data-optimized="2" rel="stylesheet" href="wp-content/litespeed/css/0de906e30485f8daf98d9289639993ca.css" />
 
 
 
@@ -1875,7 +1875,7 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 			<div class="dd-vit__titles">
 				<p class="dd-vit__eyebrow">Válogatás</p>
 				<h2 id="dd-vit-title" class="dd-vit__title">Böngéssz a vitrinünkben</h2>
-				<p class="dd-vit__sub">Húzd oldalra, vagy használd a nyilakat. A kategóriákkal szűrhetsz is.</p>
+				<p class="dd-vit__sub">Forgasd a körhintát: húzd, használd a nyilakat, vagy kattints egy termékre. A kategóriákkal szűrhetsz is.</p>
 			</div>
 			<div class="dd-vit__ctrl" hidden>
 				<button type="button" class="dd-vit__nav" data-dir="-1" aria-label="Előző termékek"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></svg></button>
@@ -2354,8 +2354,9 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 	<!--/copyscapeskip-->
 
 <script id="dd-vitrin-js">
-/* Főoldali vitrin: nyilak, húzással görgetés, billentyűzet, kategória-szűrő, haladásjelző.
-   Nem küld hálózati kérést, nem tárol semmit. Szkript nélkül is használható: a sor ilyenkor egyszerűen görgethető. */
+/* Főoldali vitrin: 3D körhinta (gyűrű). A csempék egy kör mentén állnak, a középső kiemelt; húzással (tehetetlenséggel), nyilakkal,
+   billentyűzettel, vízszintes görgetéssel és a csúszkával lapozható; a kategória-gombok szűrnek. Alatta a középső termék adatai és gombja.
+   Nem küld hálózati kérést, nem tárol semmit. Szkript nélkül a sor egyszerűen vízszintesen görgethető marad (lásd vitrin.css). */
 (function () {
 	'use strict';
 
@@ -2365,81 +2366,245 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 
 	var rail = root.querySelector('.dd-vit__rail'), track = root.querySelector('.dd-vit__track');
 	var ctrl = root.querySelector('.dd-vit__ctrl'), chips = root.querySelector('.dd-vit__chips');
-	var bar = root.querySelector('.dd-vit__bar'), fill = bar && bar.querySelector('span'), live = root.querySelector('.dd-vit__live');
+	var bar = root.querySelector('.dd-vit__bar'), live = root.querySelector('.dd-vit__live');
 	var prev = root.querySelector('[data-dir="-1"]'), next = root.querySelector('[data-dir="1"]');
+	var all = [].slice.call(track.querySelectorAll('.dd-vit__tile'));
 	var reduce = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
-	var tick = 0;
 
-	// a vezérlők csak szkripttel működnek, ezért csak itt jelennek meg
-	if (ctrl) { ctrl.hidden = false; }
+	// három csempénél kevesebb nem körhinta: marad az egyszerű, görgethető sor
+	if (all.length < 3 || !w.requestAnimationFrame || !live) { return; }
+
+	var STEP = 24, VIS = 5;                       // 24°-onként áll egy csempe a körön, ±5 látszik
+	var items = [], n = 0, p = 0, target = 0, vel = 0, drag = null, raf = 0, front = -1, suppress = false;
+	var W = 220, R = 520, H = 340, rs = 0, ss = STEP;
+
+	function now() { return w.performance && w.performance.now ? w.performance.now() : Date.now(); }
+	function wrapIdx(i) { return ((i % n) + n) % n; }
+	function dist(i) { var x = i - p; return x - n * Math.round(x / n); }
+	// a legrövidebb úton elérendő célérték az i. csempéhez
+	function targetFor(i) { var cur = Math.round(target), diff = i - wrapIdx(cur); diff -= n * Math.round(diff / n); return cur + diff; }
+
+	/* ---------- Felépítés ---------- */
+
+	root.classList.add('dd-vit--ring');
+	if (ctrl && ctrl.parentNode) { ctrl.parentNode.removeChild(ctrl); }
+	if (bar && bar.parentNode) { bar.parentNode.removeChild(bar); }
+
+	rail.setAttribute('tabindex', '0');
+	rail.setAttribute('role', 'region');
+	rail.setAttribute('aria-roledescription', 'körhinta');
+	rail.setAttribute('aria-label', 'Termékkörhinta: húzd, használd a nyilakat, vagy a bal és jobb nyíl billentyűt');
+	[prev, next].forEach(function (b) { if (b) { b.hidden = false; rail.appendChild(b); } });
 	if (chips) { chips.hidden = false; }
-	if (bar) { bar.hidden = false; }
 
-	function step() { var t = track.querySelector('.dd-vit__tile:not([hidden])'); return t ? t.getBoundingClientRect().width + 18 : 280; }
+	var inner = live.parentNode;
+	var info = d.createElement('div'), scrub = d.createElement('div');
+	info.className = 'dd-vit__info';
+	scrub.className = 'dd-vit__scrub';
+	scrub.innerHTML = '<span class="dd-vit__pos"></span><input type="range" min="0" max="0" value="0" aria-label="Ugrás a listában">';
+	inner.insertBefore(info, inner.firstChild);
+	inner.insertBefore(scrub, live);
+	var pos = scrub.querySelector('.dd-vit__pos'), range = scrub.querySelector('input');
 
-	function update() {
-		tick = 0;
-		var max = rail.scrollWidth - rail.clientWidth, x = rail.scrollLeft;
-		if (prev) { prev.disabled = x <= 2; }
-		if (next) { next.disabled = x >= max - 2; }
-		if (fill) {
-			var vis = max > 0 ? rail.clientWidth / rail.scrollWidth : 1;
-			fill.style.width = Math.max(8, vis * 100) + '%';
-			fill.style.transform = 'translateX(' + (max > 0 ? (x / max) * ((1 - vis) / vis) * 100 : 0) + '%)';
-		}
+	function collect() {
+		items = all.filter(function (t) { return !t.hidden; });
+		n = items.length;
+		range.max = String(Math.max(0, n - 1));
+		scrub.hidden = n < 2;
+		ss = n < 9 ? STEP * Math.min(2, 9 / Math.max(1, n)) : STEP;     // kevés csempénél szélesebb ív, hogy ne maradjon üres a gyűrű
+		[prev, next].forEach(function (b) { if (b) { b.hidden = n < 2; } });
+		all.forEach(function (t) { if (t.hidden) { t.classList.remove('is-front'); } });
 	}
 
-	function schedule() { if (!tick) { tick = w.requestAnimationFrame(update); } }
+	// a csempe szélessége a tárolóhoz igazodik; a gyűrű sugara a szögből jön, hogy a szomszédok éppen egymás mellett álljanak
+	function measure() {
+		var cw = rail.clientWidth || w.innerWidth;
+		W = Math.round(Math.max(150, Math.min(250, cw * (w.innerWidth < 700 ? 0.46 : 0.24))));
+		R = Math.round(W / 2 / Math.tan(STEP / 2 * Math.PI / 180) * 1.18);
+		root.style.setProperty('--rw', W + 'px');
+		var h = 0, i;
+		// a természetes tartalom-magasságot mérjük (a csempék egyformán magasak lesznek)
+		for (i = 0; i < items.length; i++) { items[i].style.height = 'auto'; h = Math.max(h, items[i].offsetHeight); items[i].style.height = ''; }
+		H = h || Math.round(W * 1.5);
+		root.style.setProperty('--rh', H + 'px');
+		track.style.transform = 'translateZ(' + (-R) + 'px) rotateX(-4deg)';
+	}
 
-	function go(dir) { rail.scrollBy({ left: dir * Math.max(step(), rail.clientWidth * 0.8), behavior: reduce ? 'auto' : 'smooth' }); }
+	/* ---------- Kirajzolás ---------- */
 
-	if (prev) { prev.addEventListener('click', function () { go(-1); }); }
-	if (next) { next.addEventListener('click', function () { go(1); }); }
-	rail.addEventListener('scroll', schedule, { passive: true });
-	w.addEventListener('resize', schedule);
+	function showInfo() {
+		var t = items[front];
+		info.textContent = '';
+		if (!t) { return; }
 
-	// billentyűzet: nyilak a fókuszált soron
-	rail.addEventListener('keydown', function (e) {
-		if (e.key === 'ArrowRight') { e.preventDefault(); go(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
-	});
+		var catEl = t.querySelector('.dd-vit__cat'), nameEl = t.querySelector('.dd-vit__name'), priceEl = t.querySelector('.dd-vit__price');
+		var btn = t.querySelector('.dd-vit__foot .button'), link = t.querySelector('.dd-vit__link');
+		var main = d.createElement('div'), buy = d.createElement('div'), cat = d.createElement('span'), h = d.createElement('h3'), price = d.createElement('span');
 
-	// húzás egérrel (érintőképernyőn a böngésző saját görgetése működik)
-	var drag = null, moved = 0;
+		main.className = 'dd-vit__info-main';
+		cat.className = 'dd-vit__cat'; cat.textContent = catEl ? catEl.textContent : '';
+		h.className = 'dd-vit__info-name'; h.textContent = nameEl ? nameEl.textContent : '';
+		main.appendChild(cat); main.appendChild(h);
+
+		buy.className = 'dd-vit__info-buy';
+		price.className = 'dd-vit__price'; price.innerHTML = priceEl ? priceEl.innerHTML : '';
+		buy.appendChild(price);
+		if (btn) { buy.appendChild(btn.cloneNode(true)); }
+		if (link) {
+			var more = d.createElement('a');
+			more.className = 'dd-vit__more'; more.href = link.getAttribute('href'); more.textContent = 'Részletek';
+			buy.appendChild(more);
+		}
+		info.appendChild(main); info.appendChild(buy);
+
+		pos.textContent = (front + 1) + ' / ' + n;
+		range.value = String(front);
+		live.textContent = h.textContent + ', ' + (front + 1) + ' / ' + n + '.';
+	}
+
+	function render() {
+		var i, t, dd, ang, f, base = Math.round(p);
+		for (i = 0; i < n; i++) {
+			t = items[i]; dd = dist(i); ang = dd * ss;
+			if (Math.abs(ang) >= 112) {                   // a gyűrű hátsó fele nem látszik
+				if (t._on !== false) { t.style.visibility = 'hidden'; t.classList.remove('is-front'); t._on = false; }
+				continue;
+			}
+			if (t._on !== true) { t.style.visibility = 'visible'; t._on = true; }
+			f = Math.max(0, 1 - Math.abs(dd) / (VIS + 0.5));
+			t.style.transform = 'rotateY(' + ang.toFixed(2) + 'deg) translateZ(' + R + 'px)';
+			t.style.opacity = (0.25 + 0.75 * f).toFixed(3);
+			t.style.zIndex = String(100 - Math.round(Math.abs(dd) * 10));
+			t.classList.toggle('is-front', Math.abs(dd) < 0.5);
+		}
+		var cur = n ? wrapIdx(base) : -1;
+		if (cur !== front) { front = cur; showInfo(); }
+	}
+
+	// puha követés: a gyűrű minden képkockán a cél felé közelít; csak mozgás közben fut
+	function frame() {
+		raf = 0;
+		if (!drag) {
+			p += (target - p) * 0.14;
+			if (Math.abs(target - p) < 0.001) { p = target; }
+		}
+		render();
+		if (drag || Math.abs(target - p) > 0.0005) { raf = w.requestAnimationFrame(frame); }
+	}
+
+	function kick() { if (!raf) { raf = w.requestAnimationFrame(frame); } }
+	function go(t) { target = t; if (reduce) { p = t; } kick(); }
+
+	/* ---------- Vezérlés ---------- */
+
+	if (prev) { prev.addEventListener('click', function () { go(Math.round(target) - 1); }); }
+	if (next) { next.addEventListener('click', function () { go(Math.round(target) + 1); }); }
+
+	range.addEventListener('input', function () { go(targetFor(parseInt(range.value, 10) || 0)); });
+
+	// húzás tehetetlenséggel (a rögzítés csak valódi húzásnál indul, így a sima kattintás a hivatkozásra jut)
 	rail.addEventListener('pointerdown', function (e) {
-		if (e.pointerType !== 'mouse' || e.button !== 0) { return; }
-		drag = { x: e.clientX, left: rail.scrollLeft }; moved = 0;
+		if ((e.pointerType === 'mouse' && e.button !== 0) || e.target.closest('.dd-vit__nav')) { return; }
+		drag = { x: e.clientX, p0: p, moved: 0, lastX: e.clientX, lastT: now(), id: e.pointerId, cap: false };
+		vel = 0;
 	});
-	w.addEventListener('pointermove', function (e) {
+
+	rail.addEventListener('pointermove', function (e) {
 		if (!drag) { return; }
 		var dx = e.clientX - drag.x;
-		moved = Math.max(moved, Math.abs(dx));
-		if (moved > 5) { rail.classList.add('is-dragging'); rail.scrollLeft = drag.left - dx; }
+		drag.moved = Math.max(drag.moved, Math.abs(dx));
+		if (!drag.cap && drag.moved > 6) {
+			drag.cap = true;
+			try { rail.setPointerCapture(drag.id); } catch (err) {}
+			rail.classList.add('is-dragging');
+			kick();
+		}
+		if (drag.cap) {
+			var t = now();
+			vel = vel * 0.5 + (e.clientX - drag.lastX) / Math.max(8, t - drag.lastT) * 0.5;
+			drag.lastX = e.clientX; drag.lastT = t;
+			p = drag.p0 - dx / (W * 0.95);
+			target = p;
+		}
 	});
-	function endDrag() { if (!drag) { return; } drag = null; w.setTimeout(function () { rail.classList.remove('is-dragging'); }, 0); }
-	w.addEventListener('pointerup', endDrag);
-	w.addEventListener('pointercancel', endDrag);
-	// húzás után ne nyíljon meg a termék
-	rail.addEventListener('click', function (e) { if (moved > 5) { e.preventDefault(); e.stopPropagation(); moved = 0; } }, true);
+
+	function endDrag() {
+		if (!drag) { return; }
+		var moved = drag.moved, cap = drag.cap, fling = now() - drag.lastT > 100 ? 0 : -vel / (W * 0.95) * 220;   // px/ms -> csempe; megállás után nincs lendület
+		drag = null;
+		rail.classList.remove('is-dragging');
+		if (moved > 6) { suppress = true; w.setTimeout(function () { suppress = false; }, 0); }
+		if (cap) { go(Math.round(p + Math.max(-4, Math.min(4, fling)))); }          // lendület után a legközelebbi csempére áll
+	}
+
+	rail.addEventListener('pointerup', endDrag);
+	rail.addEventListener('pointercancel', endDrag);
+
+	// kattintás: a középső csempe megnyílik, az oldalsó középre fordul; húzás után nincs kattintás
+	rail.addEventListener('click', function (e) {
+		if (suppress) { e.preventDefault(); e.stopPropagation(); suppress = false; return; }
+		if (e.target.closest('.dd-vit__nav')) { return; }
+		var t = e.target.closest('.dd-vit__tile'), i = t ? items.indexOf(t) : -1;
+		if (i >= 0 && i !== front) { e.preventDefault(); e.stopPropagation(); go(targetFor(i)); }
+	}, true);
+
+	// vízszintes görgetés (vagy Shift + görgő): lapoz; a függőleges görgetés az oldalé marad
+	rail.addEventListener('wheel', function (e) {
+		var dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+		if (!dx) { return; }
+		e.preventDefault();
+		var t = now();
+		if (t - rs < 160) { return; }
+		rs = t;
+		go(Math.round(target) + (dx > 0 ? 1 : -1));
+	}, { passive: false });
+
+	rail.addEventListener('keydown', function (e) {
+		if (e.target !== rail) { return; }
+		if (e.key === 'ArrowLeft') { e.preventDefault(); go(Math.round(target) - 1); }
+		else if (e.key === 'ArrowRight') { e.preventDefault(); go(Math.round(target) + 1); }
+		else if (e.key === 'Home') { e.preventDefault(); go(targetFor(0)); }
+		else if (e.key === 'End') { e.preventDefault(); go(targetFor(n - 1)); }
+	});
+
+	// billentyűzettel egy oldalsó csempére lépve az középre fordul
+	track.addEventListener('focusin', function (e) {
+		var t = e.target.closest('.dd-vit__tile'), i = t ? items.indexOf(t) : -1;
+		if (i >= 0 && i !== front) { go(targetFor(i)); }
+	});
 
 	// kategória-szűrő
 	if (chips) {
 		chips.addEventListener('click', function (e) {
 			var b = e.target.closest('.dd-vit__chip');
 			if (!b) { return; }
-			var cat = b.getAttribute('data-cat'), n = 0;
+			var cat = b.getAttribute('data-cat');
 			[].forEach.call(chips.querySelectorAll('.dd-vit__chip'), function (c) { c.setAttribute('aria-pressed', c === b ? 'true' : 'false'); });
-			[].forEach.call(track.querySelectorAll('.dd-vit__tile'), function (t) {
-				var show = !cat || t.getAttribute('data-cat') === cat;
-				t.hidden = !show;
-				if (show) { n++; }
-			});
-			rail.scrollTo({ left: 0, behavior: 'auto' });
-			update();
-			if (live) { live.textContent = n + ' termék látható.'; }
+			all.forEach(function (t) { t.hidden = !(!cat || t.getAttribute('data-cat') === cat); t._on = undefined; });
+			collect();
+			p = target = 0; front = -1;
+			measure(); render();
+			if (!n) { info.textContent = ''; }
 		});
 	}
 
-	update();
+	var rt = 0;
+	function relayout() { w.clearTimeout(rt); rt = w.setTimeout(function () { measure(); render(); }, 120); }
+	w.addEventListener('resize', relayout);
+	w.addEventListener('load', relayout);
+	if (d.fonts && d.fonts.ready) { d.fonts.ready.then(relayout); }
+
+	// a gyűrű képei a 3D-s elforgatás miatt nem "lazy" módon töltődnek: amint a vitrin a képernyő közelébe ér, mind betöltődik,
+	// így forgatáskor nincs üres kártya
+	function eager() { all.forEach(function (t) { [].forEach.call(t.querySelectorAll('img'), function (im) { im.loading = 'eager'; im.decoding = 'async'; }); }); }
+	if (w.IntersectionObserver) {
+		var io = new w.IntersectionObserver(function (es) { if (es.some(function (x) { return x.isIntersecting; })) { eager(); io.disconnect(); } }, { rootMargin: '900px 0px' });
+		io.observe(root);
+	} else { eager(); }
+
+	collect();
+	measure();
+	render();
 })();
 
 </script>
@@ -2674,5 +2839,5 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 13:06:15 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 14:23:25 -->
 <!-- QUIC.cloud CCSS in queue -->
