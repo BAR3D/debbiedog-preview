@@ -1051,66 +1051,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 <link rel="icon" href="../../wp-content/uploads/2024/10/cropped-debbiedog_512_512-192x192.png" sizes="192x192" />
 <link rel="apple-touch-icon" href="../../wp-content/uploads/2024/10/cropped-debbiedog_512_512-180x180.png" />
 
-<style id="dd-test-style">
-.dd-test-banner{background:#0F4F4A;color:#FAF7F2;font:600 13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:9px 16px;text-align:center}
-.dd-test-banner strong{background:#E89A7B;color:#083531;padding:2px 9px;border-radius:99px;margin-right:8px;letter-spacing:.05em}
-.dd-ex{font-style:normal;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#083531;background:#F6D9CB;border-radius:99px;padding:2px 7px;margin-left:5px;white-space:nowrap;vertical-align:middle}
 
-/* 1) bizalmi sor a Kosárba gomb alatt */
-.dd-trust{list-style:none;margin:20px 0 0;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;background:var(--color-cream,#FAF7F2);border:1px solid var(--color-border,#E8E2D6);border-radius:14px}
-.dd-trust li{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:13.5px;line-height:1.35;color:var(--color-text-body,#5a5346)}
-.dd-trust svg{flex:none;width:22px;height:22px;stroke:var(--color-primary-strong,#1B7A72);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.dd-trust strong{display:block;color:var(--color-dark,#0F4F4A);font-weight:600}
-.dd-routine-link{display:inline-block;margin-top:12px;font-size:14px;color:var(--color-primary-stronger,#145F59);text-decoration:underline;text-underline-offset:3px}
-@media (max-width:480px){.dd-trust{grid-template-columns:1fr;gap:12px;padding:14px 16px}.dd-trust strong{display:inline;margin-right:4px}}
-
-/* 2) fürdőnap-rutin */
-.dd-routine{margin:64px auto 56px;text-align:center}
-.dd-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-coral,#E89A7B)}
-.dd-routine .ct-module-title{margin:0}
-.dd-routine-lead{margin:10px auto 0;max-width:560px;color:var(--color-text-body,#5a5346)}
-.dd-steps{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.dd-step{position:relative;margin:0}
-.dd-step + .dd-step::before{content:"+";position:absolute;left:-17px;top:42%;width:12px;text-align:center;font-size:22px;line-height:1;color:var(--color-primary-strong,#1B7A72);font-weight:600}
-.dd-step-card{position:relative;display:block;height:100%;box-sizing:border-box;padding:18px 16px 20px;background:#fff;border:1.5px solid var(--color-border,#E8E2D6);border-radius:18px;cursor:pointer;text-align:center}
-html:not(.dd-reduce) .dd-step-card{transition:transform var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1)),box-shadow var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1)),border-color var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1)),background-color var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1))}
-.dd-step-card:hover{box-shadow:0 12px 26px rgba(15,79,74,.12)}
-html:not(.dd-reduce) .dd-step-card:hover{transform:translateY(-3px)}
-.dd-step-card:has(input:checked){border-color:var(--color-primary,#2DA89E);background:#F4FBFA}
-.dd-step-card:has(input:focus-visible){outline:3px solid var(--color-dark,#0F4F4A);outline-offset:3px}
-.dd-step-card input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
-.dd-step-num{position:absolute;top:12px;left:12px;width:26px;height:26px;border-radius:50%;background:var(--color-pastel,#B8E0DA);color:var(--color-dark,#0F4F4A);font-weight:700;font-size:13px;line-height:26px;text-align:center}
-.dd-check{position:absolute;top:12px;right:12px;width:24px;height:24px;box-sizing:border-box;border-radius:50%;border:2px solid var(--color-border,#E8E2D6);background:#fff}
-.dd-check::after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg);opacity:0}
-.dd-step-card:has(input:checked) .dd-check{background:var(--color-primary-strong,#1B7A72);border-color:var(--color-primary-strong,#1B7A72)}
-.dd-step-card:has(input:checked) .dd-check::after{opacity:1}
-.dd-step-card img{display:block;width:100%;max-width:190px;aspect-ratio:1;object-fit:cover;border-radius:12px;margin:10px auto 14px}
-.dd-step-body{display:block}
-.dd-step-kicker{display:block;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--color-primary-strong,#1B7A72)}
-.dd-step-name{display:block;margin:5px 0 7px;font-size:15px;font-weight:600;line-height:1.3;color:var(--color-dark,#0F4F4A)}
-.dd-step-price{display:block;font-size:14px;color:var(--color-text-body,#5a5346)}
-.dd-here{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:99px;background:var(--color-dark,#0F4F4A);color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
-.dd-routine-total{margin:28px auto 0;max-width:540px;padding:20px 22px;background:var(--color-cream,#FAF7F2);border:1px solid var(--color-border,#E8E2D6);border-radius:16px}
-.dd-sum{margin:0;color:var(--color-text-body,#5a5346);font-size:15px}
-.dd-sum strong{display:inline-block;margin-left:6px;font-family:var(--font-heading,Georgia,serif);font-size:30px;line-height:1.1;color:var(--color-dark,#0F4F4A)}
-.dd-sum del{opacity:.6;margin-left:6px}
-.dd-save{margin:6px 0 0;font-size:14px;color:var(--color-primary-stronger,#145F59);font-weight:600}
-.dd-routine-btn{margin-top:14px}
-.dd-note{margin:12px 0 0;min-height:1.4em;font-size:13.5px;color:var(--color-text-body,#5a5346)}
-@media (max-width:760px){
-  .dd-steps{grid-template-columns:1fr;gap:14px}
-  .dd-step + .dd-step::before{display:none}
-  .dd-step-card{display:grid;grid-template-columns:88px 1fr;gap:14px;align-items:center;text-align:left;padding:14px 48px 14px 14px}
-  .dd-step-card img{margin:0;max-width:88px}
-  .dd-step-num{display:none}
-  .dd-check{top:50%;margin-top:-12px}
-}
-
-/* 3) kártya-jelvény (Csomag) */
-ul.products li.product figure{position:relative}
-.dd-badge{position:absolute;top:10px;left:10px;z-index:2;display:inline-block;padding:6px 10px;border-radius:99px;background:var(--color-dark,#0F4F4A);color:#fff;font:700 11px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.05em;text-transform:uppercase}
-.dd-badge--new{background:var(--color-coral,#E89A7B);color:var(--color-on-coral,#083531)}
-</style>
 <style id="hucommerce-theme-fix">
 </style>
 	
@@ -1154,7 +1095,7 @@ ul.products li.product figure{position:relative}
 	setTimeout(out, 4000);
 })();
 </script>
-	<div class="dd-test-banner" role="note"><strong>TESZT-ÖTLET</strong>Helyi próba, nem a webshop része, nincs gitben. A <span class="dd-ex" style="margin:0 2px">példa</span> jelzésű feliratok kitaláltak.</div><a class="skip-link screen-reader-text" href="#main">Skip to content</a><div class="ct-drawer-canvas" data-location="start">
+	<a class="skip-link screen-reader-text" href="#main">Skip to content</a><div class="ct-drawer-canvas" data-location="start">
 		<div id="search-modal" class="ct-panel" data-behaviour="modal" role="dialog" aria-label="Search modal" inert>
 			<div class="ct-panel-actions">
 				<button class="ct-toggle-close" data-type="type-1" aria-label="Close search modal">
@@ -2044,5 +1985,5 @@ ul.products li.product figure{position:relative}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 12:45:48 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 13:06:28 -->
 <!-- QUIC.cloud CCSS in queue -->
