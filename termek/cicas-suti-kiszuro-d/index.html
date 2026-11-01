@@ -194,6 +194,66 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 <link rel="icon" href="../../wp-content/uploads/2024/10/cropped-debbiedog_512_512-192x192.png" sizes="192x192" />
 <link rel="apple-touch-icon" href="../../wp-content/uploads/2024/10/cropped-debbiedog_512_512-180x180.png" />
 
+<style id="dd-test-style">
+.dd-test-banner{background:#0F4F4A;color:#FAF7F2;font:600 13px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif;padding:9px 16px;text-align:center}
+.dd-test-banner strong{background:#E89A7B;color:#083531;padding:2px 9px;border-radius:99px;margin-right:8px;letter-spacing:.05em}
+.dd-ex{font-style:normal;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#083531;background:#F6D9CB;border-radius:99px;padding:2px 7px;margin-left:5px;white-space:nowrap;vertical-align:middle}
+
+/* 1) bizalmi sor a Kosárba gomb alatt */
+.dd-trust{list-style:none;margin:20px 0 0;padding:16px 18px;display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;background:var(--color-cream,#FAF7F2);border:1px solid var(--color-border,#E8E2D6);border-radius:14px}
+.dd-trust li{display:flex;gap:10px;align-items:flex-start;margin:0;font-size:13.5px;line-height:1.35;color:var(--color-text-body,#5a5346)}
+.dd-trust svg{flex:none;width:22px;height:22px;stroke:var(--color-primary-strong,#1B7A72);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.dd-trust strong{display:block;color:var(--color-dark,#0F4F4A);font-weight:600}
+.dd-routine-link{display:inline-block;margin-top:12px;font-size:14px;color:var(--color-primary-stronger,#145F59);text-decoration:underline;text-underline-offset:3px}
+@media (max-width:480px){.dd-trust{grid-template-columns:1fr;gap:12px;padding:14px 16px}.dd-trust strong{display:inline;margin-right:4px}}
+
+/* 2) fürdőnap-rutin */
+.dd-routine{margin:64px auto 56px;text-align:center}
+.dd-eyebrow{margin:0 0 6px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--color-coral,#E89A7B)}
+.dd-routine .ct-module-title{margin:0}
+.dd-routine-lead{margin:10px auto 0;max-width:560px;color:var(--color-text-body,#5a5346)}
+.dd-steps{list-style:none;margin:30px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.dd-step{position:relative;margin:0}
+.dd-step + .dd-step::before{content:"+";position:absolute;left:-17px;top:42%;width:12px;text-align:center;font-size:22px;line-height:1;color:var(--color-primary-strong,#1B7A72);font-weight:600}
+.dd-step-card{position:relative;display:block;height:100%;box-sizing:border-box;padding:18px 16px 20px;background:#fff;border:1.5px solid var(--color-border,#E8E2D6);border-radius:18px;cursor:pointer;text-align:center}
+html:not(.dd-reduce) .dd-step-card{transition:transform var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1)),box-shadow var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1)),border-color var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1)),background-color var(--dd-dur-enter,.22s) var(--dd-ease-out,cubic-bezier(.2,.7,.2,1))}
+.dd-step-card:hover{box-shadow:0 12px 26px rgba(15,79,74,.12)}
+html:not(.dd-reduce) .dd-step-card:hover{transform:translateY(-3px)}
+.dd-step-card:has(input:checked){border-color:var(--color-primary,#2DA89E);background:#F4FBFA}
+.dd-step-card:has(input:focus-visible){outline:3px solid var(--color-dark,#0F4F4A);outline-offset:3px}
+.dd-step-card input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.dd-step-num{position:absolute;top:12px;left:12px;width:26px;height:26px;border-radius:50%;background:var(--color-pastel,#B8E0DA);color:var(--color-dark,#0F4F4A);font-weight:700;font-size:13px;line-height:26px;text-align:center}
+.dd-check{position:absolute;top:12px;right:12px;width:24px;height:24px;box-sizing:border-box;border-radius:50%;border:2px solid var(--color-border,#E8E2D6);background:#fff}
+.dd-check::after{content:"";position:absolute;left:6px;top:2px;width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg);opacity:0}
+.dd-step-card:has(input:checked) .dd-check{background:var(--color-primary-strong,#1B7A72);border-color:var(--color-primary-strong,#1B7A72)}
+.dd-step-card:has(input:checked) .dd-check::after{opacity:1}
+.dd-step-card img{display:block;width:100%;max-width:190px;aspect-ratio:1;object-fit:cover;border-radius:12px;margin:10px auto 14px}
+.dd-step-body{display:block}
+.dd-step-kicker{display:block;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--color-primary-strong,#1B7A72)}
+.dd-step-name{display:block;margin:5px 0 7px;font-size:15px;font-weight:600;line-height:1.3;color:var(--color-dark,#0F4F4A)}
+.dd-step-price{display:block;font-size:14px;color:var(--color-text-body,#5a5346)}
+.dd-here{display:inline-block;margin-top:8px;padding:3px 10px;border-radius:99px;background:var(--color-dark,#0F4F4A);color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.dd-routine-total{margin:28px auto 0;max-width:540px;padding:20px 22px;background:var(--color-cream,#FAF7F2);border:1px solid var(--color-border,#E8E2D6);border-radius:16px}
+.dd-sum{margin:0;color:var(--color-text-body,#5a5346);font-size:15px}
+.dd-sum strong{display:inline-block;margin-left:6px;font-family:var(--font-heading,Georgia,serif);font-size:30px;line-height:1.1;color:var(--color-dark,#0F4F4A)}
+.dd-sum del{opacity:.6;margin-left:6px}
+.dd-save{margin:6px 0 0;font-size:14px;color:var(--color-primary-stronger,#145F59);font-weight:600}
+.dd-routine-btn{margin-top:14px}
+.dd-note{margin:12px 0 0;min-height:1.4em;font-size:13.5px;color:var(--color-text-body,#5a5346)}
+@media (max-width:760px){
+  .dd-steps{grid-template-columns:1fr;gap:14px}
+  .dd-step + .dd-step::before{display:none}
+  .dd-step-card{display:grid;grid-template-columns:88px 1fr;gap:14px;align-items:center;text-align:left;padding:14px 48px 14px 14px}
+  .dd-step-card img{margin:0;max-width:88px}
+  .dd-step-num{display:none}
+  .dd-check{top:50%;margin-top:-12px}
+}
+
+/* 3) kártya-jelvény (Csomag) */
+ul.products li.product figure{position:relative}
+.dd-badge{position:absolute;top:10px;left:10px;z-index:2;display:inline-block;padding:6px 10px;border-radius:99px;background:var(--color-dark,#0F4F4A);color:#fff;font:700 11px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.05em;text-transform:uppercase}
+.dd-badge--new{background:var(--color-coral,#E89A7B);color:var(--color-on-coral,#083531)}
+</style>
 <style id="hucommerce-theme-fix">
 </style>
 	
@@ -206,7 +266,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 <body class="wp-singular product-template-default single single-product postid-6155 wp-custom-logo wp-embed-responsive wp-theme-blocksy wp-child-theme-debbiedog-child theme-blocksy woocommerce woocommerce-page woocommerce-no-js woo-variation-swatches wvs-behavior-blur wvs-theme-debbiedog-child wvs-show-label wvs-tooltip" data-link="type-2" data-prefix="product" data-header="type-1" data-footer="type-1" itemscope="itemscope" itemtype="https://schema.org/WebPage">
 
-<a class="skip-link screen-reader-text" href="#main">Skip to content</a><div class="ct-drawer-canvas" data-location="start">
+<div class="dd-test-banner" role="note"><strong>TESZT-ÖTLET</strong>Helyi próba, nem a webshop része, nincs gitben. A <span class="dd-ex" style="margin:0 2px">példa</span> jelzésű feliratok kitaláltak.</div><a class="skip-link screen-reader-text" href="#main">Skip to content</a><div class="ct-drawer-canvas" data-location="start">
 		<div id="search-modal" class="ct-panel" data-behaviour="modal" role="dialog" aria-label="Search modal" inert>
 			<div class="ct-panel-actions">
 				<button class="ct-toggle-close" data-type="type-1" aria-label="Close search modal">
@@ -564,10 +624,10 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 	<form class="cart" action="#" method="get">
 		<input name="woobt_ids" class="woobt-ids woobt-ids-6155" data-id="6155" type="hidden"/>
 		<div class="ct-cart-actions"><div class="quantity" data-type="type-2">
-	<span class="ct-increase"></span><span class="ct-decrease"></span>	<label class="screen-reader-text" for="quantity_6ae6f791416f1">Cicás Süti Kiszúró (D) mennyiség</label>
+	<span class="ct-increase"></span><span class="ct-decrease"></span>	<label class="screen-reader-text" for="quantity_6ae7010f38fb9">Cicás Süti Kiszúró (D) mennyiség</label>
 	<input
 		type="number"
-				id="quantity_6ae6f791416f1"
+				id="quantity_6ae7010f38fb9"
 		class="input-text qty text"
 		name="quantity"
 		value="1"
@@ -585,7 +645,7 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 		</div>	</form>
 
-	
+	<ul class="dd-trust" aria-label="Szállítás és vásárlás"><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h11v9H3zM14 9h4l3 3v3h-7z"/><circle cx="7.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/></svg><span><strong>Ingyenes szállítás</strong>40&nbsp;000&nbsp;Ft felett</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span><strong>Kézbesítés</strong>2–4 munkanap <em class="dd-ex">példa</em></span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11h16v9H4zM3 8h18v3H3zM12 8v12"/><path d="M12 8c-1-3-5-3.5-5-1.2C7 8 9 8 12 8zm0 0c1-3 5-3.5 5-1.2C17 8 15 8 12 8z"/></svg><span><strong>Ajándékcsomagolás</strong>a pénztárnál <em class="dd-ex">példa</em></span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/></svg><span><strong>Kérdésed van?</strong>Írj nekünk <em class="dd-ex">példa</em></span></li></ul><a class="dd-routine-link" href="#furdonap">Fürdőnap-rutin: sampon + kondicionáló + parfüm egy helyen&nbsp;↓</a>
 </div><span class="ct-product-divider" data-id="divider_2"></span><div class="product_meta">
 
 	
@@ -652,38 +712,40 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </li>
 
 			
-					<li class="product type-product post-2103 status-publish instock product_cat-cica product_cat-kutyahordozok product_tag-cica product_tag-haz product_tag-ibiyaya product_tag-kucko product_tag-macska product_tag-takcio has-post-thumbnail shipping-taxable purchasable product-type-simple thumbs-bottom">
-	<figure ><a class="ct-media-container" href="../kisallat-kucko/index.html" aria-label="Kisállat Kuckó"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Cica_Kucko_Cicaval">
-<source type="image/webp" srcset="../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-300x300.jpg.webp 300w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-100x100.jpg.webp 100w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-600x600.jpg.webp 600w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-64x64.jpg.webp 64w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-150x150.jpg.webp 150w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-768x768.jpg.webp 768w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-300x300.jpg 300w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-100x100.jpg 100w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-600x600.jpg 600w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-64x64.jpg 64w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-150x150.jpg 150w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000-768x768.jpg 768w, ../../wp-content/uploads/2019/10/03_web_FB1412_ZZ_animal-02_1000.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Kisállat Kuckó"/>
+					<li class="product type-product post-2243 status-publish instock product_cat-gazdiknak product_tag-bf product_tag-black-friday product_tag-gazdiknak product_tag-karkoto has-post-thumbnail sale shipping-taxable purchasable product-type-simple">
+	<figure >
+	<span class="onsale" data-shape="type-2">SALE</span>
+	<a class="ct-media-container" href="../mancsos-karkoto/index.html" aria-label="Mancsos Karkötő - Lávaköves"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="letöltés (3)">
+<source type="image/webp" srcset="../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-300x300.jpg.webp 300w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-100x100.jpg.webp 100w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-600x600.jpg.webp 600w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-64x64.jpg.webp 64w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-150x150.jpg.webp 150w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-768x768.jpg.webp 768w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img width="300" height="300" src="../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-300x300.jpg 300w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-100x100.jpg 100w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-600x600.jpg 600w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-64x64.jpg 64w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-150x150.jpg 150w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2-768x768.jpg 768w, ../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-3-2.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Mancsos Karkötő - Lávaköves"/>
 </picture>
-</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../kisallat-kucko/index.html" target="_self">Kisállat Kuckó</a></h2>
-	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>24 900&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
-<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="#" rel="tag" class="ct-term-78">Cica</a>, <a href="../../termekkategoria/kutyahordozok/index.html" rel="tag" class="ct-term-30">Kutyahordozók</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_2103" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="2103" data-product_sku="00038" aria-label="Kosárba: &ldquo;Kisállat Kuckó&rdquo;" rel="nofollow" data-success_message="&ldquo;Kisállat Kuckó&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_2103" class="screen-reader-text">
+</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../mancsos-karkoto/index.html" target="_self">Mancsos Karkötő &#8211; Lávaköves</a></h2>
+	<span class="price"><span class="sale-price"><del aria-hidden="true"><span class="woocommerce-Price-amount amount"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></del> <span class="screen-reader-text">Original price was: 2 990&nbsp;&#070;&#116;.</span><ins aria-hidden="true"><span class="woocommerce-Price-amount amount"><bdi>1 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></ins><span class="screen-reader-text">Current price is: 1 990&nbsp;&#070;&#116;.</span></span></span>
+<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/gazdiknak/index.html" rel="tag" class="ct-term-111">Gazdiknak</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_2243" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="2243" data-product_sku="00051" aria-label="Kosárba: &ldquo;Mancsos Karkötő - Lávaköves&rdquo;" rel="nofollow" data-success_message="&ldquo;Mancsos Karkötő - Lávaköves&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_2243" class="screen-reader-text">
 			</span>
 </div></li>
 
 			
-					<li class="product type-product post-5525 status-publish instock product_cat-cica product_cat-gazdiknak product_tag-cica product_tag-gazdiknak product_tag-suti has-post-thumbnail shipping-taxable purchasable product-type-simple thumbs-bottom">
-	<figure ><a class="ct-media-container" href="../cicas-suti-kiszuro-2/index.html" aria-label="Cicás Süti Kiszúró (A)"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="cicas_kiszuro_3">
-<source type="image/webp" srcset="../../wp-content/uploads/2020/08/cicas_kiszuro_3-300x300.jpg.webp 300w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-100x100.jpg.webp 100w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-600x600.jpg.webp 600w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-64x64.jpg.webp 64w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-150x150.jpg.webp 150w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-768x768.jpg.webp 768w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../wp-content/uploads/2020/08/cicas_kiszuro_3-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2020/08/cicas_kiszuro_3-300x300.jpg 300w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-100x100.jpg 100w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-600x600.jpg 600w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-64x64.jpg 64w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-150x150.jpg 150w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3-768x768.jpg 768w, ../../wp-content/uploads/2020/08/cicas_kiszuro_3.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Cicás Süti Kiszúró (A)"/>
+					<li class="product type-product post-3307 status-publish instock product_cat-gazdiknak product_tag-gazdiknak product_tag-karkoto has-post-thumbnail shipping-taxable purchasable product-type-simple">
+	<figure ><a class="ct-media-container" href="../mancsos-karkoto-kek/index.html" aria-label="Mancsos Karkötő - Kék"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="mancsos-karkoto-kek">
+<source type="image/webp" srcset="../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg.webp 300w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-100x100.jpg.webp 100w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-600x600.jpg.webp 600w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-64x64.jpg.webp 64w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-150x150.jpg.webp 150w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-768x768.jpg.webp 768w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img width="300" height="300" src="../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg 300w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-100x100.jpg 100w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-600x600.jpg 600w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-64x64.jpg 64w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-150x150.jpg 150w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek-768x768.jpg 768w, ../../wp-content/uploads/2019/12/mancsos-karkoto-kek.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Mancsos Karkötő - Kék"/>
 </picture>
-</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../cicas-suti-kiszuro-2/index.html" target="_self">Cicás Süti Kiszúró (A)</a></h2>
-	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>920&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
-<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="#" rel="tag" class="ct-term-78">Cica</a>, <a href="../../termekkategoria/gazdiknak/index.html" rel="tag" class="ct-term-111">Gazdiknak</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_5525" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="5525" data-product_sku="00006" aria-label="Kosárba: &ldquo;Cicás Süti Kiszúró (A)&rdquo;" rel="nofollow" data-success_message="&ldquo;Cicás Süti Kiszúró (A)&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_5525" class="screen-reader-text">
+</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../mancsos-karkoto-kek/index.html" target="_self">Mancsos Karkötő &#8211; Kék</a></h2>
+	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
+<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/gazdiknak/index.html" rel="tag" class="ct-term-111">Gazdiknak</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_3307" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="3307" data-product_sku="00050" aria-label="Kosárba: &ldquo;Mancsos Karkötő - Kék&rdquo;" rel="nofollow" data-success_message="&ldquo;Mancsos Karkötő - Kék&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_3307" class="screen-reader-text">
 			</span>
 </div></li>
 
 			
-					<li class="product type-product post-3592 status-publish last instock product_cat-gazdiknak product_tag-gazdiknak product_tag-suti has-post-thumbnail shipping-taxable purchasable product-type-simple">
-	<figure ><a class="ct-media-container" href="../kutyas-suti-kiszuro/index.html" aria-label="Kutyás Süti Kiszúró"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="kutyas suti forma">
-<source type="image/webp" srcset="../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-300x300.jpg.webp 300w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-100x100.jpg.webp 100w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-600x600.jpg.webp 600w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-64x64.jpg.webp 64w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-150x150.jpg.webp 150w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-768x768.jpg.webp 768w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-300x300.jpg 300w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-100x100.jpg 100w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-600x600.jpg 600w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-64x64.jpg 64w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-150x150.jpg 150w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3-768x768.jpg 768w, ../../wp-content/uploads/2020/01/let%C3%B6lt%C3%A9s-3-3.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Kutyás Süti Kiszúró"/>
+					<li class="product type-product post-5927 status-publish last outofstock product_cat-cica product_cat-gazdiknak product_tag-cica product_tag-gazdiknak product_tag-suti has-post-thumbnail shipping-taxable purchasable product-type-simple thumbs-bottom">
+	<figure ><span class="out-of-stock-badge" data-shape="type-2">ELFOGYOTT</span><a class="ct-media-container" href="../alma-kiszuro/index.html" aria-label="Alma Kiszúró"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="apple_forma_2">
+<source type="image/webp" srcset="../../wp-content/uploads/2020/11/apple_forma_2-300x300.jpg.webp 300w, ../../wp-content/uploads/2020/11/apple_forma_2-100x100.jpg.webp 100w, ../../wp-content/uploads/2020/11/apple_forma_2-600x600.jpg.webp 600w, ../../wp-content/uploads/2020/11/apple_forma_2-64x64.jpg.webp 64w, ../../wp-content/uploads/2020/11/apple_forma_2-150x150.jpg.webp 150w, ../../wp-content/uploads/2020/11/apple_forma_2-768x768.jpg.webp 768w, ../../wp-content/uploads/2020/11/apple_forma_2.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img width="300" height="300" src="../../wp-content/uploads/2020/11/apple_forma_2-300x300.jpg" loading="lazy" decoding="async" srcset="../../wp-content/uploads/2020/11/apple_forma_2-300x300.jpg 300w, ../../wp-content/uploads/2020/11/apple_forma_2-100x100.jpg 100w, ../../wp-content/uploads/2020/11/apple_forma_2-600x600.jpg 600w, ../../wp-content/uploads/2020/11/apple_forma_2-64x64.jpg 64w, ../../wp-content/uploads/2020/11/apple_forma_2-150x150.jpg 150w, ../../wp-content/uploads/2020/11/apple_forma_2-768x768.jpg 768w, ../../wp-content/uploads/2020/11/apple_forma_2.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Alma Kiszúró"/>
 </picture>
-</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../kutyas-suti-kiszuro/index.html" target="_self">Kutyás Süti Kiszúró</a></h2>
+</a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../alma-kiszuro/index.html" target="_self">Alma Kiszúró</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>920&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
-<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="../../termekkategoria/gazdiknak/index.html" rel="tag" class="ct-term-111">Gazdiknak</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_3592" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="3592" data-product_sku="00047" aria-label="Kosárba: &ldquo;Kutyás Süti Kiszúró&rdquo;" rel="nofollow" data-success_message="&ldquo;Kutyás Süti Kiszúró&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_3592" class="screen-reader-text">
+<ul class="entry-meta" data-type="simple:none" data-id="default" ><li class="meta-categories" data-type="simple"><a href="#" rel="tag" class="ct-term-78">Cica</a>, <a href="../../termekkategoria/gazdiknak/index.html" rel="tag" class="ct-term-111">Gazdiknak</a></li></ul><div class="ct-woo-card-actions" data-add-to-cart="auto-hide" data-alignment="equal"><a href="../alma-kiszuro/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_5927" data-quantity="1" class="button product_type_simple" data-product_id="5927" data-product_sku="00001" aria-label="&ldquo;Alma Kiszúró&rdquo; termékről több információ" rel="nofollow" data-success_message="">Tovább olvasom</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_5927" class="screen-reader-text">
 			</span>
 </div></li>
 
@@ -1261,5 +1323,5 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 09:25:54 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 10:06:24 -->
 <!-- QUIC.cloud CCSS in queue -->
