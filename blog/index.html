@@ -40,6 +40,21 @@
 		return c;
 	}
 
+	// Méret-létra: ugyanaz a kép több méretben (1, 1/2, 1/4…). A rajzolás mindig a legkisebb elegendő méretet használja, így a kép
+	// sosem kicsinyítődik 2x-nél erősebben: az erős kicsinyítés csillogást (aliasing) okoz, a kis méretű, közvetlenül rajzolt kép éles marad.
+	function ladder(size, fn, levels) {
+		var arr = [];
+		for (var k = 0; k < levels; k++) {
+			(function (f) { arr.push(sprite(size * f, size * f, function (x) { x.scale(f, f); fn(x); })); })(1 / Math.pow(2, k));
+		}
+		return arr;
+	}
+
+	function pk(lad, t) {
+		for (var i = lad.length - 1; i >= 0; i--) { if (lad[i].cw >= t) { return lad[i]; } }
+		return lad[0];
+	}
+
 	// juhar-levél körvonala (jobb fele, 100×100-as rácson; a bal fele tükrözve)
 	var MAPLE_R = [[50, 3], [57, 19], [70, 13], [67, 33], [90, 30], [80, 47], [96, 59], [66, 66], [72, 84], [54, 73], [52, 98]];
 
@@ -50,7 +65,7 @@
 		var s = SPR[k] = {}, g;
 
 		// puha pehely (a világos háttéren halvány türkiz gyűrű adja a kontrasztot)
-		s.flake = sprite(64, 64, function (x) {
+		s.flake = ladder(64, function (x) {
 			if (!dark) {
 				g = x.createRadialGradient(32, 32, 4, 32, 32, 31);
 				g.addColorStop(0, rgba(C.primary, 0.34)); g.addColorStop(0.55, rgba(C.primary, 0.16)); g.addColorStop(1, rgba(C.primary, 0));
@@ -59,10 +74,10 @@
 			g = x.createRadialGradient(32, 32, 0, 32, 32, 20);
 			g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.6, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
 			x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-		});
+		}, 4);
 
 		// hókristály: 6 ág, mellékágakkal
-		s.crystal = sprite(96, 96, function (x) {
+		s.crystal = ladder(96, function (x) {
 			x.translate(48, 48); x.lineCap = 'round'; x.lineJoin = 'round';
 			for (var pass = 0; pass < 2; pass++) {
 				x.shadowColor = pass ? 'rgba(0,0,0,0)' : (dark ? rgba(C.pastel, 0.9) : 'rgba(255,255,255,1)');
@@ -78,11 +93,11 @@
 					x.stroke(); x.restore();
 				}
 			}
-		});
+		}, 3);
 
 		// szirom: szívszerűen bevágott, színátmenetes, finom erezettel
 		function petal(c1, c2) {
-			return sprite(64, 64, function (x) {
+			return ladder(64, function (x) {
 				var gr = x.createLinearGradient(0, 4, 0, 60);
 				gr.addColorStop(0, c1); gr.addColorStop(1, c2);
 				x.fillStyle = gr;
@@ -91,13 +106,13 @@
 				x.bezierCurveTo(61, 16, 58, 44, 32, 60); x.closePath(); x.fill();
 				x.strokeStyle = 'rgba(180,90,70,.22)'; x.lineWidth = 1;
 				x.beginPath(); x.moveTo(32, 58); x.lineTo(32, 20); x.moveTo(32, 46); x.lineTo(22, 30); x.moveTo(32, 46); x.lineTo(42, 30); x.stroke();
-			});
+			}, 3);
 		}
 		s.petals = [petal('rgba(255,242,236,.97)', 'rgba(232,154,123,.93)'), petal('rgba(244,251,250,.97)', 'rgba(126,203,193,.92)'), petal('rgba(255,228,218,.97)', 'rgba(222,128,98,.92)')];
 
 		// levél: sima és juhar, őszi márka-árnyalatokban
 		function leaf(shape, col) {
-			return sprite(96, 96, function (x) {
+			return ladder(96, function (x) {
 				x.translate(48, 48);
 				var gr = x.createLinearGradient(0, -44, 0, 44);
 				gr.addColorStop(0, rgba(mix(col, C.white, 0.3), 0.97)); gr.addColorStop(1, rgba(col, 0.97));
@@ -120,12 +135,12 @@
 					x.moveTo(0, 46); x.lineTo(0, -40); x.moveTo(0, 22); x.lineTo(36, -2); x.moveTo(0, 22); x.lineTo(-36, -2); x.moveTo(0, 6); x.lineTo(22, -26); x.moveTo(0, 6); x.lineTo(-22, -26);
 				}
 				x.stroke();
-			});
+			}, 3);
 		}
 		s.leaves = [leaf(0, C.coral), leaf(1, C.coral), leaf(1, C.deepcoral), leaf(0, C.deepcoral), leaf(1, C.primary), leaf(0, mix(C.dark, C.primary, 0.3)), leaf(1, mix(C.coral, C.pastel, 0.45))];
 
 		// pitypang-szál: vékony szőrpamacs
-		s.seed = sprite(56, 56, function (x) {
+		s.seed = ladder(56, function (x) {
 			x.translate(28, 20); x.lineCap = 'round';
 			for (var i = 0; i < 15; i++) {
 				var a = -Math.PI * 0.95 + i * (Math.PI * 0.9 / 14), l = 15 + (i % 2) * 2;
@@ -135,10 +150,10 @@
 			}
 			x.strokeStyle = rgba(C.dark, 0.5); x.lineWidth = 1.2; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, 24); x.stroke();
 			x.fillStyle = rgba(C.dark, 0.6); x.beginPath(); x.ellipse(0, 26, 1.8, 3, 0, 0, TAU); x.fill();
-		});
+		}, 2);
 
 		// négyágú csillanás (hó-, jégpor)
-		s.spark = sprite(48, 48, function (x) {
+		s.spark = ladder(48, function (x) {
 			x.translate(24, 24);
 			g = x.createRadialGradient(0, 0, 0, 0, 0, 22);
 			g.addColorStop(0, rgba(dark ? C.white : C.primary, 0.5)); g.addColorStop(1, rgba(dark ? C.white : C.primary, 0));
@@ -146,14 +161,14 @@
 			x.fillStyle = 'rgba(255,255,255,1)';
 			x.shadowColor = dark ? rgba(C.pastel, 1) : rgba(C.primary, 0.9); x.shadowBlur = 5;
 			x.beginPath(); x.moveTo(0, -20); x.quadraticCurveTo(1.5, -1.5, 20, 0); x.quadraticCurveTo(1.5, 1.5, 0, 20); x.quadraticCurveTo(-1.5, 1.5, -20, 0); x.quadraticCurveTo(-1.5, -1.5, 0, -20); x.fill();
-		});
+		}, 2);
 
 		// szentjánosbogár
-		s.fly = sprite(48, 48, function (x) {
+		s.fly = ladder(48, function (x) {
 			g = x.createRadialGradient(24, 24, 0, 24, 24, 22);
 			g.addColorStop(0, 'rgba(255,248,226,1)'); g.addColorStop(0.18, 'rgba(255,236,190,.9)'); g.addColorStop(0.45, rgba(C.coral, 0.32)); g.addColorStop(1, rgba(C.coral, 0));
 			x.fillStyle = g; x.fillRect(0, 0, 48, 48);
-		});
+		}, 2);
 
 		// felhők: nappali (pasztell alj, fényes tető), viharos (mély türkiz)
 		function cloud(lo, hi, aLo, aHi) {
@@ -271,7 +286,7 @@
 		this.dark = !!(opts && opts.dark);
 		this.S = sprites(this.dark);
 		this.P = { rain: [], snow: [], crystal: [], petal: [], leaf: [], seed: [], mote: [], firefly: [], spark: [], cloud: [], splash: [] };
-		this.t = 0; this.q = 1; this.acc = 0; this.n = 0; this.first = true;
+		this.t = 0; this.q = 1; this.res = 1; this.acc = 0; this.n = 0; this.first = true;
 		this.fog = []; this.bolt = null; this.nextBolt = 5 + rnd() * 5;
 		this.L = { sun: 0, moon: 0, rays: 0, fog: 0, dark: 0 };
 		this.wind = { dir: 1, base: 0.2 };
@@ -282,9 +297,9 @@
 	Fx.prototype.size = function () {
 		var W = this.cv.clientWidth || w.innerWidth || 1280, H = this.cv.clientHeight || w.innerHeight || 720;
 		this.w = W; this.h = H;
-		this.cv.width = Math.round(W * DPR); this.cv.height = Math.round(H * DPR);
-		this.cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-		this.A = clamp(W * H / (1280 * 720), 0.45, 1.5);
+		this.cv.width = Math.round(W * DPR * this.res); this.cv.height = Math.round(H * DPR * this.res);
+		this.cx.setTransform(DPR * this.res, 0, 0, DPR * this.res, 0, 0);
+		this.A = clamp(W * H / (1280 * 720), 0.45, 2.4); // nagy kijelzőn arányosan több részecske (a motor képkockánként <1 ms)
 		if (this.sc) { this.plan = plan(this.sc, this.A, this.q); }
 	};
 
@@ -371,7 +386,10 @@
 		I.acc += dt; I.n++;
 		if (I.n >= 90) {
 			var avg = I.acc / I.n; I.acc = 0; I.n = 0;
-			if (avg > 1 / 38 && I.q > 0.5) { I.q = max(0.5, I.q - 0.15); I.plan = p = plan(I.sc, I.A, I.q); }
+			if (avg > 1 / 40) {
+				if (I.q > 0.5) { I.q = max(0.5, I.q - 0.2); I.plan = p = plan(I.sc, I.A, I.q); }
+				else if (I.res > 0.5) { I.res = I.res > 0.75 ? 0.75 : 0.5; I.size(); W = I.w; H = I.h; cx = I.cx; } // biztonsági háló nagyon lassú gépre: kisebb felbontás
+			}
 		}
 
 		// széllökések
@@ -446,13 +464,13 @@
 			o = n[i]; o.x += (sin(t * o.fr + o.ph) * o.am + wpx * 0.12) * dt; o.y += cos(t * o.fr * 0.8 + o.ph) * o.am * 0.5 * dt;
 			if (o.x < -10) { o.x = W + 10; } else if (o.x > W + 10) { o.x = -10; }
 			cx.globalAlpha = o.f * (0.28 + 0.4 * (0.5 + 0.5 * sin(t * o.tw + o.ph)));
-			cx.drawImage(S.flake, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+			cx.drawImage(pk(S.flake, o.s * 2), o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
 		}
 		for (i = 0, n = P.firefly; i < n.length; i++) {
 			o = n[i]; o.x += (sin(t * o.fr + o.ph) * o.am + wpx * 0.1) * dt; o.y += cos(t * o.fr * 1.3 + o.ph * 2) * o.am * 0.6 * dt;
 			if (o.x < -30) { o.x = W + 30; } else if (o.x > W + 30) { o.x = -30; }
 			cx.globalAlpha = o.f * max(0, sin(t * o.tw + o.ph)) * 0.95;
-			cx.drawImage(S.fly, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+			cx.drawImage(pk(S.fly, o.s * 2), o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
 		}
 		for (i = 0, n = P.spark; i < n.length; i++) {
 			o = n[i]; o.age += dt;
@@ -460,7 +478,7 @@
 			var tw = sin(o.age / o.life * Math.PI);
 			cx.globalAlpha = o.f * tw * tw;
 			cx.save(); cx.translate(o.x, o.y); cx.rotate(0.3 + tw * 0.6); var ss = o.s * (0.5 + 0.5 * tw);
-			cx.drawImage(S.spark, -ss, -ss, ss * 2, ss * 2); cx.restore();
+			cx.drawImage(pk(S.spark, ss * 2), -ss, -ss, ss * 2, ss * 2); cx.restore();
 		}
 
 		// --- pitypangszálak ---
@@ -471,7 +489,7 @@
 			if (o.y < -40) { o.y = H + 30; } else if (o.y > H + 40) { o.y = -30; }
 			cx.globalAlpha = o.f * (0.45 + 0.5 * o.z);
 			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r + sin(t * o.fr + o.ph) * 0.35);
-			cx.drawImage(S.seed, -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
+			cx.drawImage(pk(S.seed, o.s * 2), -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
 		}
 
 		// --- szirmok és levelek: lebegés, billegés, a szél sodorja ---
@@ -485,7 +503,7 @@
 				if (q.x > W + 100) { q.x = -90; } else if (q.x < -100) { q.x = W + 90; }
 				cx.globalAlpha = q.f * (0.55 + 0.45 * q.z);
 				cx.save(); cx.translate(q.x, q.y); cx.rotate(q.r); cx.scale(0.35 + 0.65 * abs(cos(q.fl)), 1);
-				cx.drawImage(sprs[q.i], -q.s, -q.s, q.s * 2, q.s * 2); cx.restore();
+				cx.drawImage(pk(sprs[q.i], q.s * 1.5), -q.s, -q.s, q.s * 2, q.s * 2); cx.restore();
 			}
 		}
 		flutter(P.petal, S.petals, 34, 0.6, 1);
@@ -498,7 +516,7 @@
 			if (o.y > H + o.s) { o.y = -o.s; o.x = rnd() * (W + 120) - 60; }
 			if (o.x > W + 60) { o.x = -50; } else if (o.x < -60) { o.x = W + 50; }
 			cx.globalAlpha = o.f * (0.4 + 0.55 * o.z) * (o.z > 0.88 ? 0.7 : 1);
-			cx.drawImage(S.flake, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+			cx.drawImage(pk(S.flake, o.s * 2), o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
 		}
 		for (i = 0, n = P.crystal; i < n.length; i++) {
 			o = n[i];
@@ -506,7 +524,7 @@
 			if (o.y > H + o.s) { o.y = -o.s; o.x = rnd() * (W + 120) - 60; }
 			if (o.x > W + 60) { o.x = -50; } else if (o.x < -60) { o.x = W + 50; }
 			cx.globalAlpha = o.f * (0.5 + 0.5 * o.z);
-			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r); cx.drawImage(S.crystal, -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
+			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r); cx.drawImage(pk(S.crystal, o.s * 2), -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
 		}
 
 		// --- eső: sebességgel arányos csíkok, mélység szerint négy rétegben, a földet érő cseppek fröccsennek ---
@@ -715,7 +733,7 @@
 	function buildChip() {
 		if (chip || !(livePossible() || w.DDPreview) || d.getElementById('dd-wx')) { return; }
 		var root = d.createElement('div');
-		root.className = 'dd-wx'; root.id = 'dd-wx'; root.setAttribute('role', 'group'); root.setAttribute('aria-label', 'Időjárás');
+		root.className = 'dd-wx'; root.id = 'dd-wx'; root.setAttribute('role', 'region'); root.setAttribute('aria-label', 'Időjárás');
 		root.innerHTML = '<button type="button" class="dd-wx__btn" aria-pressed="false"><span class="dd-wx__ico" aria-hidden="true"></span><span class="dd-wx__lbl" aria-live="polite"></span></button><a class="dd-wx__src" href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" title="Időjárás-adatok: MET Norway (CC BY 4.0)" hidden>met.no</a><span class="dd-wx__msg" role="status" hidden></span>';
 		d.body.appendChild(root);
 		chip = { root: root, btn: root.querySelector('button'), ico: root.querySelector('.dd-wx__ico'), lbl: root.querySelector('.dd-wx__lbl'), src: root.querySelector('.dd-wx__src'), msg: root.querySelector('.dd-wx__msg') };
@@ -871,7 +889,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/f1482641a95b276b76cc60126eb16617.css" />
+<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/82d4ec670d5e52009a95d6dece5c5dda.css" />
 
 
 
@@ -1841,5 +1859,5 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 11:10:53 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 12:34:58 -->
 <!-- QUIC.cloud CCSS in queue -->

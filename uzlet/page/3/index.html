@@ -40,6 +40,21 @@
 		return c;
 	}
 
+	// Méret-létra: ugyanaz a kép több méretben (1, 1/2, 1/4…). A rajzolás mindig a legkisebb elegendő méretet használja, így a kép
+	// sosem kicsinyítődik 2x-nél erősebben: az erős kicsinyítés csillogást (aliasing) okoz, a kis méretű, közvetlenül rajzolt kép éles marad.
+	function ladder(size, fn, levels) {
+		var arr = [];
+		for (var k = 0; k < levels; k++) {
+			(function (f) { arr.push(sprite(size * f, size * f, function (x) { x.scale(f, f); fn(x); })); })(1 / Math.pow(2, k));
+		}
+		return arr;
+	}
+
+	function pk(lad, t) {
+		for (var i = lad.length - 1; i >= 0; i--) { if (lad[i].cw >= t) { return lad[i]; } }
+		return lad[0];
+	}
+
 	// juhar-levél körvonala (jobb fele, 100×100-as rácson; a bal fele tükrözve)
 	var MAPLE_R = [[50, 3], [57, 19], [70, 13], [67, 33], [90, 30], [80, 47], [96, 59], [66, 66], [72, 84], [54, 73], [52, 98]];
 
@@ -50,7 +65,7 @@
 		var s = SPR[k] = {}, g;
 
 		// puha pehely (a világos háttéren halvány türkiz gyűrű adja a kontrasztot)
-		s.flake = sprite(64, 64, function (x) {
+		s.flake = ladder(64, function (x) {
 			if (!dark) {
 				g = x.createRadialGradient(32, 32, 4, 32, 32, 31);
 				g.addColorStop(0, rgba(C.primary, 0.34)); g.addColorStop(0.55, rgba(C.primary, 0.16)); g.addColorStop(1, rgba(C.primary, 0));
@@ -59,10 +74,10 @@
 			g = x.createRadialGradient(32, 32, 0, 32, 32, 20);
 			g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.6, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
 			x.fillStyle = g; x.fillRect(0, 0, 64, 64);
-		});
+		}, 4);
 
 		// hókristály: 6 ág, mellékágakkal
-		s.crystal = sprite(96, 96, function (x) {
+		s.crystal = ladder(96, function (x) {
 			x.translate(48, 48); x.lineCap = 'round'; x.lineJoin = 'round';
 			for (var pass = 0; pass < 2; pass++) {
 				x.shadowColor = pass ? 'rgba(0,0,0,0)' : (dark ? rgba(C.pastel, 0.9) : 'rgba(255,255,255,1)');
@@ -78,11 +93,11 @@
 					x.stroke(); x.restore();
 				}
 			}
-		});
+		}, 3);
 
 		// szirom: szívszerűen bevágott, színátmenetes, finom erezettel
 		function petal(c1, c2) {
-			return sprite(64, 64, function (x) {
+			return ladder(64, function (x) {
 				var gr = x.createLinearGradient(0, 4, 0, 60);
 				gr.addColorStop(0, c1); gr.addColorStop(1, c2);
 				x.fillStyle = gr;
@@ -91,13 +106,13 @@
 				x.bezierCurveTo(61, 16, 58, 44, 32, 60); x.closePath(); x.fill();
 				x.strokeStyle = 'rgba(180,90,70,.22)'; x.lineWidth = 1;
 				x.beginPath(); x.moveTo(32, 58); x.lineTo(32, 20); x.moveTo(32, 46); x.lineTo(22, 30); x.moveTo(32, 46); x.lineTo(42, 30); x.stroke();
-			});
+			}, 3);
 		}
 		s.petals = [petal('rgba(255,242,236,.97)', 'rgba(232,154,123,.93)'), petal('rgba(244,251,250,.97)', 'rgba(126,203,193,.92)'), petal('rgba(255,228,218,.97)', 'rgba(222,128,98,.92)')];
 
 		// levél: sima és juhar, őszi márka-árnyalatokban
 		function leaf(shape, col) {
-			return sprite(96, 96, function (x) {
+			return ladder(96, function (x) {
 				x.translate(48, 48);
 				var gr = x.createLinearGradient(0, -44, 0, 44);
 				gr.addColorStop(0, rgba(mix(col, C.white, 0.3), 0.97)); gr.addColorStop(1, rgba(col, 0.97));
@@ -120,12 +135,12 @@
 					x.moveTo(0, 46); x.lineTo(0, -40); x.moveTo(0, 22); x.lineTo(36, -2); x.moveTo(0, 22); x.lineTo(-36, -2); x.moveTo(0, 6); x.lineTo(22, -26); x.moveTo(0, 6); x.lineTo(-22, -26);
 				}
 				x.stroke();
-			});
+			}, 3);
 		}
 		s.leaves = [leaf(0, C.coral), leaf(1, C.coral), leaf(1, C.deepcoral), leaf(0, C.deepcoral), leaf(1, C.primary), leaf(0, mix(C.dark, C.primary, 0.3)), leaf(1, mix(C.coral, C.pastel, 0.45))];
 
 		// pitypang-szál: vékony szőrpamacs
-		s.seed = sprite(56, 56, function (x) {
+		s.seed = ladder(56, function (x) {
 			x.translate(28, 20); x.lineCap = 'round';
 			for (var i = 0; i < 15; i++) {
 				var a = -Math.PI * 0.95 + i * (Math.PI * 0.9 / 14), l = 15 + (i % 2) * 2;
@@ -135,10 +150,10 @@
 			}
 			x.strokeStyle = rgba(C.dark, 0.5); x.lineWidth = 1.2; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, 24); x.stroke();
 			x.fillStyle = rgba(C.dark, 0.6); x.beginPath(); x.ellipse(0, 26, 1.8, 3, 0, 0, TAU); x.fill();
-		});
+		}, 2);
 
 		// négyágú csillanás (hó-, jégpor)
-		s.spark = sprite(48, 48, function (x) {
+		s.spark = ladder(48, function (x) {
 			x.translate(24, 24);
 			g = x.createRadialGradient(0, 0, 0, 0, 0, 22);
 			g.addColorStop(0, rgba(dark ? C.white : C.primary, 0.5)); g.addColorStop(1, rgba(dark ? C.white : C.primary, 0));
@@ -146,14 +161,14 @@
 			x.fillStyle = 'rgba(255,255,255,1)';
 			x.shadowColor = dark ? rgba(C.pastel, 1) : rgba(C.primary, 0.9); x.shadowBlur = 5;
 			x.beginPath(); x.moveTo(0, -20); x.quadraticCurveTo(1.5, -1.5, 20, 0); x.quadraticCurveTo(1.5, 1.5, 0, 20); x.quadraticCurveTo(-1.5, 1.5, -20, 0); x.quadraticCurveTo(-1.5, -1.5, 0, -20); x.fill();
-		});
+		}, 2);
 
 		// szentjánosbogár
-		s.fly = sprite(48, 48, function (x) {
+		s.fly = ladder(48, function (x) {
 			g = x.createRadialGradient(24, 24, 0, 24, 24, 22);
 			g.addColorStop(0, 'rgba(255,248,226,1)'); g.addColorStop(0.18, 'rgba(255,236,190,.9)'); g.addColorStop(0.45, rgba(C.coral, 0.32)); g.addColorStop(1, rgba(C.coral, 0));
 			x.fillStyle = g; x.fillRect(0, 0, 48, 48);
-		});
+		}, 2);
 
 		// felhők: nappali (pasztell alj, fényes tető), viharos (mély türkiz)
 		function cloud(lo, hi, aLo, aHi) {
@@ -271,7 +286,7 @@
 		this.dark = !!(opts && opts.dark);
 		this.S = sprites(this.dark);
 		this.P = { rain: [], snow: [], crystal: [], petal: [], leaf: [], seed: [], mote: [], firefly: [], spark: [], cloud: [], splash: [] };
-		this.t = 0; this.q = 1; this.acc = 0; this.n = 0; this.first = true;
+		this.t = 0; this.q = 1; this.res = 1; this.acc = 0; this.n = 0; this.first = true;
 		this.fog = []; this.bolt = null; this.nextBolt = 5 + rnd() * 5;
 		this.L = { sun: 0, moon: 0, rays: 0, fog: 0, dark: 0 };
 		this.wind = { dir: 1, base: 0.2 };
@@ -282,9 +297,9 @@
 	Fx.prototype.size = function () {
 		var W = this.cv.clientWidth || w.innerWidth || 1280, H = this.cv.clientHeight || w.innerHeight || 720;
 		this.w = W; this.h = H;
-		this.cv.width = Math.round(W * DPR); this.cv.height = Math.round(H * DPR);
-		this.cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-		this.A = clamp(W * H / (1280 * 720), 0.45, 1.5);
+		this.cv.width = Math.round(W * DPR * this.res); this.cv.height = Math.round(H * DPR * this.res);
+		this.cx.setTransform(DPR * this.res, 0, 0, DPR * this.res, 0, 0);
+		this.A = clamp(W * H / (1280 * 720), 0.45, 2.4); // nagy kijelzőn arányosan több részecske (a motor képkockánként <1 ms)
 		if (this.sc) { this.plan = plan(this.sc, this.A, this.q); }
 	};
 
@@ -371,7 +386,10 @@
 		I.acc += dt; I.n++;
 		if (I.n >= 90) {
 			var avg = I.acc / I.n; I.acc = 0; I.n = 0;
-			if (avg > 1 / 38 && I.q > 0.5) { I.q = max(0.5, I.q - 0.15); I.plan = p = plan(I.sc, I.A, I.q); }
+			if (avg > 1 / 40) {
+				if (I.q > 0.5) { I.q = max(0.5, I.q - 0.2); I.plan = p = plan(I.sc, I.A, I.q); }
+				else if (I.res > 0.5) { I.res = I.res > 0.75 ? 0.75 : 0.5; I.size(); W = I.w; H = I.h; cx = I.cx; } // biztonsági háló nagyon lassú gépre: kisebb felbontás
+			}
 		}
 
 		// széllökések
@@ -446,13 +464,13 @@
 			o = n[i]; o.x += (sin(t * o.fr + o.ph) * o.am + wpx * 0.12) * dt; o.y += cos(t * o.fr * 0.8 + o.ph) * o.am * 0.5 * dt;
 			if (o.x < -10) { o.x = W + 10; } else if (o.x > W + 10) { o.x = -10; }
 			cx.globalAlpha = o.f * (0.28 + 0.4 * (0.5 + 0.5 * sin(t * o.tw + o.ph)));
-			cx.drawImage(S.flake, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+			cx.drawImage(pk(S.flake, o.s * 2), o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
 		}
 		for (i = 0, n = P.firefly; i < n.length; i++) {
 			o = n[i]; o.x += (sin(t * o.fr + o.ph) * o.am + wpx * 0.1) * dt; o.y += cos(t * o.fr * 1.3 + o.ph * 2) * o.am * 0.6 * dt;
 			if (o.x < -30) { o.x = W + 30; } else if (o.x > W + 30) { o.x = -30; }
 			cx.globalAlpha = o.f * max(0, sin(t * o.tw + o.ph)) * 0.95;
-			cx.drawImage(S.fly, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+			cx.drawImage(pk(S.fly, o.s * 2), o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
 		}
 		for (i = 0, n = P.spark; i < n.length; i++) {
 			o = n[i]; o.age += dt;
@@ -460,7 +478,7 @@
 			var tw = sin(o.age / o.life * Math.PI);
 			cx.globalAlpha = o.f * tw * tw;
 			cx.save(); cx.translate(o.x, o.y); cx.rotate(0.3 + tw * 0.6); var ss = o.s * (0.5 + 0.5 * tw);
-			cx.drawImage(S.spark, -ss, -ss, ss * 2, ss * 2); cx.restore();
+			cx.drawImage(pk(S.spark, ss * 2), -ss, -ss, ss * 2, ss * 2); cx.restore();
 		}
 
 		// --- pitypangszálak ---
@@ -471,7 +489,7 @@
 			if (o.y < -40) { o.y = H + 30; } else if (o.y > H + 40) { o.y = -30; }
 			cx.globalAlpha = o.f * (0.45 + 0.5 * o.z);
 			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r + sin(t * o.fr + o.ph) * 0.35);
-			cx.drawImage(S.seed, -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
+			cx.drawImage(pk(S.seed, o.s * 2), -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
 		}
 
 		// --- szirmok és levelek: lebegés, billegés, a szél sodorja ---
@@ -485,7 +503,7 @@
 				if (q.x > W + 100) { q.x = -90; } else if (q.x < -100) { q.x = W + 90; }
 				cx.globalAlpha = q.f * (0.55 + 0.45 * q.z);
 				cx.save(); cx.translate(q.x, q.y); cx.rotate(q.r); cx.scale(0.35 + 0.65 * abs(cos(q.fl)), 1);
-				cx.drawImage(sprs[q.i], -q.s, -q.s, q.s * 2, q.s * 2); cx.restore();
+				cx.drawImage(pk(sprs[q.i], q.s * 1.5), -q.s, -q.s, q.s * 2, q.s * 2); cx.restore();
 			}
 		}
 		flutter(P.petal, S.petals, 34, 0.6, 1);
@@ -498,7 +516,7 @@
 			if (o.y > H + o.s) { o.y = -o.s; o.x = rnd() * (W + 120) - 60; }
 			if (o.x > W + 60) { o.x = -50; } else if (o.x < -60) { o.x = W + 50; }
 			cx.globalAlpha = o.f * (0.4 + 0.55 * o.z) * (o.z > 0.88 ? 0.7 : 1);
-			cx.drawImage(S.flake, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+			cx.drawImage(pk(S.flake, o.s * 2), o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
 		}
 		for (i = 0, n = P.crystal; i < n.length; i++) {
 			o = n[i];
@@ -506,7 +524,7 @@
 			if (o.y > H + o.s) { o.y = -o.s; o.x = rnd() * (W + 120) - 60; }
 			if (o.x > W + 60) { o.x = -50; } else if (o.x < -60) { o.x = W + 50; }
 			cx.globalAlpha = o.f * (0.5 + 0.5 * o.z);
-			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r); cx.drawImage(S.crystal, -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
+			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r); cx.drawImage(pk(S.crystal, o.s * 2), -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
 		}
 
 		// --- eső: sebességgel arányos csíkok, mélység szerint négy rétegben, a földet érő cseppek fröccsennek ---
@@ -715,7 +733,7 @@
 	function buildChip() {
 		if (chip || !(livePossible() || w.DDPreview) || d.getElementById('dd-wx')) { return; }
 		var root = d.createElement('div');
-		root.className = 'dd-wx'; root.id = 'dd-wx'; root.setAttribute('role', 'group'); root.setAttribute('aria-label', 'Időjárás');
+		root.className = 'dd-wx'; root.id = 'dd-wx'; root.setAttribute('role', 'region'); root.setAttribute('aria-label', 'Időjárás');
 		root.innerHTML = '<button type="button" class="dd-wx__btn" aria-pressed="false"><span class="dd-wx__ico" aria-hidden="true"></span><span class="dd-wx__lbl" aria-live="polite"></span></button><a class="dd-wx__src" href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" title="Időjárás-adatok: MET Norway (CC BY 4.0)" hidden>met.no</a><span class="dd-wx__msg" role="status" hidden></span>';
 		d.body.appendChild(root);
 		chip = { root: root, btn: root.querySelector('button'), ico: root.querySelector('.dd-wx__ico'), lbl: root.querySelector('.dd-wx__lbl'), src: root.querySelector('.dd-wx__src'), msg: root.querySelector('.dd-wx__msg') };
@@ -874,7 +892,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../../../wp-content/litespeed/css/e3d02d133888ead4b34ccc89d0022701.css" />
+<link data-optimized="2" rel="stylesheet" href="../../../wp-content/litespeed/css/e5785ebfc6e7a1db996e20f6dd464fc0.css" />
 
 
 
@@ -1424,7 +1442,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-728 status-publish first instock product_cat-natur-kutyakozmetikum product_tag-always-your-friend product_tag-natur-kutyakozmetikum has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><a class="ct-media-container" href="../../../termek/citronella-permet/index.html" aria-label="Citronella Permet"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Citronella_Nyari_Permet">
 <source type="image/webp" srcset="../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-300x300.jpg.webp 300w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-100x100.jpg.webp 100w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-600x600.jpg.webp 600w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-64x64.jpg.webp 64w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-150x150.jpg.webp 150w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-768x768.jpg.webp 768w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-300x300.jpg 300w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-100x100.jpg 100w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-600x600.jpg 600w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-64x64.jpg 64w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-150x150.jpg 150w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-768x768.jpg 768w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Citronella Permet"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-300x300.jpg" alt="Citronella Permet – kutyaápolási termék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-300x300.jpg 300w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-100x100.jpg 100w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-600x600.jpg 600w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-64x64.jpg 64w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-150x150.jpg 150w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet-768x768.jpg 768w, ../../../wp-content/uploads/2019/07/Citronella_Nyari_Permet.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/citronella-permet/index.html" target="_self">Citronella Permet</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>5 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1444,7 +1462,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-10166 status-publish instock product_cat-cica product_cat-taplalekkiegeszito product_tag-nordcanin product_tag-taplalekkiegeszito has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><a class="ct-media-container" href="../../../termek/nordcanin-soreleszto-kutyaknak-macskaknak/index.html" aria-label="Nordcanin Sörélesztő"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Nordcanin_Sörélesztő">
 <source type="image/webp" srcset="../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg.webp 300w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-100x100.jpg.webp 100w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-600x600.jpg.webp 600w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-64x64.jpg.webp 64w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-150x150.jpg.webp 150w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-768x768.jpg.webp 768w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-50x50.jpg.webp 50w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg 300w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-100x100.jpg 100w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-600x600.jpg 600w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-64x64.jpg 64w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-150x150.jpg 150w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-768x768.jpg 768w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-50x50.jpg 50w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Nordcanin Sörélesztő"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg" alt="Nordcanin Sörélesztő – cicatermék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg 300w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-100x100.jpg 100w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-600x600.jpg 600w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-64x64.jpg 64w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-150x150.jpg 150w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-768x768.jpg 768w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto-50x50.jpg 50w, ../../../wp-content/uploads/2025/02/Nordcanin_Soreleszto.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/nordcanin-soreleszto-kutyaknak-macskaknak/index.html" target="_self">Nordcanin Sörélesztő</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>5 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1456,7 +1474,7 @@ ul.products li.product figure{position:relative}
 	<span class="onsale" data-shape="type-2">SALE</span>
 	<a class="ct-media-container" href="../../../termek/debbiedog-polo/index.html" aria-label="DebbieDog Póló"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="debbiedog_polo_elol">
 <source type="image/webp" srcset="../../../wp-content/uploads/2021/06/debbiedog_polo_elol-300x300.jpg.webp 300w, ../../../wp-content/uploads/2021/06/debbiedog_polo_elol-100x100.jpg.webp 100w, ../../../wp-content/uploads/2021/06/debbiedog_polo_elol-150x150.jpg.webp 150w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2021/06/debbiedog_polo_elol-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2021/06/debbiedog_polo_elol-300x300.jpg 300w, ../../../wp-content/uploads/2021/06/debbiedog_polo_elol-100x100.jpg 100w, ../../../wp-content/uploads/2021/06/debbiedog_polo_elol-150x150.jpg 150w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="DebbieDog Póló"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2021/06/debbiedog_polo_elol-300x300.jpg" alt="DebbieDog Póló – kutyatermék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2021/06/debbiedog_polo_elol-300x300.jpg 300w, ../../../wp-content/uploads/2021/06/debbiedog_polo_elol-100x100.jpg 100w, ../../../wp-content/uploads/2021/06/debbiedog_polo_elol-150x150.jpg 150w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/debbiedog-polo/index.html" target="_self">DebbieDog Póló</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>4 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span><span class="screen-reader-text">Ártartomány: 2 990&nbsp;&#70;&#116; - 4 990&nbsp;&#70;&#116;</span></span>
@@ -1493,7 +1511,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-10110 status-publish first outofstock product_cat-jutalomfalat product_cat-taplalekkiegeszito product_tag-4dogs product_tag-jutalomfalat product_tag-taplalekkiegeszito has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><span class="out-of-stock-badge" data-shape="type-2">ELFOGYOTT</span><a class="ct-media-container" href="../../../termek/4dogs-mogyorovaj-szarvasagancsporral-kutyaknak/index.html" aria-label="4DOGS Mogyoróvaj Szarvasagancsporral"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="4DOGS-mogyorovaj-330g">
 <source type="image/webp" srcset="../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-300x300.jpg.webp 300w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-100x100.jpg.webp 100w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-600x600.jpg.webp 600w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-64x64.jpg.webp 64w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-1024x1024.jpg.webp 1024w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-150x150.jpg.webp 150w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-768x768.jpg.webp 768w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-50x50.jpg.webp 50w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g.jpg.webp 1500w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-300x300.jpg 300w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-100x100.jpg 100w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-600x600.jpg 600w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-64x64.jpg 64w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-1024x1024.jpg 1024w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-150x150.jpg 150w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-768x768.jpg 768w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-50x50.jpg 50w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g.jpg 1500w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="4DOGS Mogyoróvaj Szarvasagancsporral"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-300x300.jpg" alt="4DOGS Mogyoróvaj Szarvasagancsporral – jutalomfalat" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-300x300.jpg 300w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-100x100.jpg 100w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-600x600.jpg 600w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-64x64.jpg 64w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-1024x1024.jpg 1024w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-150x150.jpg 150w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-768x768.jpg 768w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g-50x50.jpg 50w, ../../../wp-content/uploads/2025/02/4DOGS-mogyorovaj-330g.jpg 1500w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/4dogs-mogyorovaj-szarvasagancsporral-kutyaknak/index.html" target="_self">4DOGS Mogyoróvaj Szarvasagancsporral</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>4 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1503,7 +1521,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-9884 status-publish instock product_cat-kiegeszitok product_cat-natur-kutyakozmetikum has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><a class="ct-media-container" href="../../../termek/premium-bambusz-apolo-tisztitoparna/index.html" aria-label="Prémium Bambusz Ápoló Tisztítópárna"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Reusable Organic Pads-min">
 <source type="image/webp" srcset="../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg.webp 300w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-100x100.jpg.webp 100w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-600x600.jpg.webp 600w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-64x64.jpg.webp 64w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1024x1024.jpg.webp 1024w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-150x150.jpg.webp 150w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-768x768.jpg.webp 768w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1536x1536.jpg.webp 1536w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-2048x2048.jpg.webp 2048w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-50x50.jpg.webp 50w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg 300w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-100x100.jpg 100w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-600x600.jpg 600w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-64x64.jpg 64w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1024x1024.jpg 1024w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-150x150.jpg 150w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-768x768.jpg 768w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1536x1536.jpg 1536w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-2048x2048.jpg 2048w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-50x50.jpg 50w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Prémium Bambusz Ápoló Tisztítópárna"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg" alt="Prémium Bambusz Ápoló Tisztítópárna – kutyaápolási termék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg 300w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-100x100.jpg 100w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-600x600.jpg 600w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-64x64.jpg 64w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1024x1024.jpg 1024w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-150x150.jpg 150w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-768x768.jpg 768w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1536x1536.jpg 1536w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-2048x2048.jpg 2048w, ../../../wp-content/uploads/2024/11/Reusable-Organic-Pads-min-50x50.jpg 50w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/premium-bambusz-apolo-tisztitoparna/index.html" target="_self">Prémium Bambusz Ápoló Tisztítópárna</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>3 690&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1513,7 +1531,7 @@ ul.products li.product figure{position:relative}
 <li class="wvs-archive-product-wrapper product type-product post-2017 status-publish instock product_cat-kiegeszitok has-post-thumbnail shipping-taxable purchasable product-type-variable has-default-attributes">
 	<figure ><a class="ct-media-container" href="../../../termek/szilikon-jutalomfalat-tarto/index.html" aria-label="Szilikon Jutalomfalat Tartó"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="sarga_kek_zold_szilikon_jutalomfalat_tarto">
 <source type="image/webp" srcset="../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-300x300.jpg.webp 300w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-100x100.jpg.webp 100w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-600x600.jpg.webp 600w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-64x64.jpg.webp 64w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-150x150.jpg.webp 150w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-768x768.jpg.webp 768w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-300x300.jpg 300w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-100x100.jpg 100w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-600x600.jpg 600w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-64x64.jpg 64w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-150x150.jpg 150w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-768x768.jpg 768w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Szilikon Jutalomfalat Tartó"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-300x300.jpg" alt="Szilikon Jutalomfalat Tartó – kutyakiegészítő" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-300x300.jpg 300w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-100x100.jpg 100w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-600x600.jpg 600w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-64x64.jpg 64w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-150x150.jpg 150w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto-768x768.jpg 768w, ../../../wp-content/uploads/2019/10/sarga_kek_zold_szilikon_jutalomfalat_tarto.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/szilikon-jutalomfalat-tarto/index.html" target="_self">Szilikon Jutalomfalat Tartó</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>3 690&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1545,7 +1563,7 @@ ul.products li.product figure{position:relative}
 <li class="wvs-archive-product-wrapper product type-product post-6254 status-publish last instock product_cat-cica product_cat-gazdiknak has-post-thumbnail shipping-taxable purchasable product-type-variable has-default-attributes">
 	<figure ><a class="ct-media-container" href="../../../termek/cicas-koteny/index.html" aria-label="Cicás Kötény"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="kis_cicas_nagy_cicas_koteny">
 <source type="image/webp" srcset="../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-300x300.jpg.webp 300w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-100x100.jpg.webp 100w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-600x600.jpg.webp 600w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-64x64.jpg.webp 64w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-150x150.jpg.webp 150w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-768x768.jpg.webp 768w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-300x300.jpg 300w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-100x100.jpg 100w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-600x600.jpg 600w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-64x64.jpg 64w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-150x150.jpg 150w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-768x768.jpg 768w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Cicás Kötény"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-300x300.jpg" alt="Cicás Kötény – cicatermék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-300x300.jpg 300w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-100x100.jpg 100w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-600x600.jpg 600w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-64x64.jpg 64w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-150x150.jpg 150w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny-768x768.jpg 768w, ../../../wp-content/uploads/2021/01/kis_cicas_nagy_cicas_koteny.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/cicas-koteny/index.html" target="_self">Cicás Kötény</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>3 290&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1585,7 +1603,7 @@ ul.products li.product figure{position:relative}
 <li class="wvs-archive-product-wrapper product type-product post-6209 status-publish first instock product_cat-gazdiknak has-post-thumbnail shipping-taxable purchasable product-type-variable has-default-attributes">
 	<figure ><a class="ct-media-container" href="../../../termek/kutyas-koteny/index.html" aria-label="Kutyás Kötény"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="yorkie_koteny">
 <source type="image/webp" srcset="../../../wp-content/uploads/2020/12/yorkie_koteny-300x300.jpg.webp 300w, ../../../wp-content/uploads/2020/12/yorkie_koteny-100x100.jpg.webp 100w, ../../../wp-content/uploads/2020/12/yorkie_koteny-600x600.jpg.webp 600w, ../../../wp-content/uploads/2020/12/yorkie_koteny-64x64.jpg.webp 64w, ../../../wp-content/uploads/2020/12/yorkie_koteny-150x150.jpg.webp 150w, ../../../wp-content/uploads/2020/12/yorkie_koteny-768x768.jpg.webp 768w, ../../../wp-content/uploads/2020/12/yorkie_koteny.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2020/12/yorkie_koteny-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2020/12/yorkie_koteny-300x300.jpg 300w, ../../../wp-content/uploads/2020/12/yorkie_koteny-100x100.jpg 100w, ../../../wp-content/uploads/2020/12/yorkie_koteny-600x600.jpg 600w, ../../../wp-content/uploads/2020/12/yorkie_koteny-64x64.jpg 64w, ../../../wp-content/uploads/2020/12/yorkie_koteny-150x150.jpg 150w, ../../../wp-content/uploads/2020/12/yorkie_koteny-768x768.jpg 768w, ../../../wp-content/uploads/2020/12/yorkie_koteny.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Kutyás Kötény"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2020/12/yorkie_koteny-300x300.jpg" alt="Kutyás Kötény – kutyatermék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2020/12/yorkie_koteny-300x300.jpg 300w, ../../../wp-content/uploads/2020/12/yorkie_koteny-100x100.jpg 100w, ../../../wp-content/uploads/2020/12/yorkie_koteny-600x600.jpg 600w, ../../../wp-content/uploads/2020/12/yorkie_koteny-64x64.jpg 64w, ../../../wp-content/uploads/2020/12/yorkie_koteny-150x150.jpg 150w, ../../../wp-content/uploads/2020/12/yorkie_koteny-768x768.jpg 768w, ../../../wp-content/uploads/2020/12/yorkie_koteny.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/kutyas-koteny/index.html" target="_self">Kutyás Kötény</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>3 290&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1639,7 +1657,7 @@ ul.products li.product figure{position:relative}
 <li class="wvs-archive-product-wrapper product type-product post-9563 status-publish instock product_cat-jutalomfalat product_cat-taplalekkiegeszito product_tag-4dogs product_tag-jutalomfalat product_tag-taplalekkiegeszito has-post-thumbnail shipping-taxable purchasable product-type-variable has-default-attributes">
 	<figure ><a class="ct-media-container" href="../../../termek/4dogs-churpi-ragosajt/index.html" aria-label="4DOGS Churpi Rágósajt"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="churpi06">
 <source type="image/webp" srcset="../../../wp-content/uploads/2024/10/churpi06-300x300.jpg.webp 300w, ../../../wp-content/uploads/2024/10/churpi06-100x100.jpg.webp 100w, ../../../wp-content/uploads/2024/10/churpi06-600x600.jpg.webp 600w, ../../../wp-content/uploads/2024/10/churpi06-64x64.jpg.webp 64w, ../../../wp-content/uploads/2024/10/churpi06-1024x1024.jpg.webp 1024w, ../../../wp-content/uploads/2024/10/churpi06-150x150.jpg.webp 150w, ../../../wp-content/uploads/2024/10/churpi06-768x768.jpg.webp 768w, ../../../wp-content/uploads/2024/10/churpi06-50x50.jpg.webp 50w, ../../../wp-content/uploads/2024/10/churpi06.jpg.webp 1500w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2024/10/churpi06-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2024/10/churpi06-300x300.jpg 300w, ../../../wp-content/uploads/2024/10/churpi06-100x100.jpg 100w, ../../../wp-content/uploads/2024/10/churpi06-600x600.jpg 600w, ../../../wp-content/uploads/2024/10/churpi06-64x64.jpg 64w, ../../../wp-content/uploads/2024/10/churpi06-1024x1024.jpg 1024w, ../../../wp-content/uploads/2024/10/churpi06-150x150.jpg 150w, ../../../wp-content/uploads/2024/10/churpi06-768x768.jpg 768w, ../../../wp-content/uploads/2024/10/churpi06-50x50.jpg 50w, ../../../wp-content/uploads/2024/10/churpi06.jpg 1500w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="4DOGS Churpi Rágósajt"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2024/10/churpi06-300x300.jpg" alt="4DOGS Churpi Rágósajt – jutalomfalat" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2024/10/churpi06-300x300.jpg 300w, ../../../wp-content/uploads/2024/10/churpi06-100x100.jpg 100w, ../../../wp-content/uploads/2024/10/churpi06-600x600.jpg 600w, ../../../wp-content/uploads/2024/10/churpi06-64x64.jpg 64w, ../../../wp-content/uploads/2024/10/churpi06-1024x1024.jpg 1024w, ../../../wp-content/uploads/2024/10/churpi06-150x150.jpg 150w, ../../../wp-content/uploads/2024/10/churpi06-768x768.jpg 768w, ../../../wp-content/uploads/2024/10/churpi06-50x50.jpg 50w, ../../../wp-content/uploads/2024/10/churpi06.jpg 1500w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/4dogs-churpi-ragosajt/index.html" target="_self">4DOGS Churpi Rágósajt</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>2 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span><span class="screen-reader-text">Ártartomány: 2 490&nbsp;&#70;&#116; - 2 990&nbsp;&#70;&#116;</span></span>
@@ -1671,7 +1689,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-5267 status-publish last instock product_cat-kiegeszitok has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><a class="ct-media-container" href="../../../termek/poop-emoji-kakizacsi-tarto/index.html" aria-label="Poop Emoji Kakizacsi Tartó"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="poop_emoji_kakizacsi_tarto">
 <source type="image/webp" srcset="../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-300x300.jpg.webp 300w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-100x100.jpg.webp 100w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-600x600.jpg.webp 600w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-64x64.jpg.webp 64w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-150x150.jpg.webp 150w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-768x768.jpg.webp 768w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-300x300.jpg 300w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-100x100.jpg 100w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-600x600.jpg 600w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-64x64.jpg 64w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-150x150.jpg 150w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-768x768.jpg 768w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Poop Emoji Kakizacsi Tartó"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-300x300.jpg" alt="Poop Emoji Kakizacsi Tartó – kutyakiegészítő" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-300x300.jpg 300w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-100x100.jpg 100w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-600x600.jpg 600w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-64x64.jpg 64w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-150x150.jpg 150w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto-768x768.jpg 768w, ../../../wp-content/uploads/2020/07/poop_emoji_kakizacsi_tarto.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/poop-emoji-kakizacsi-tarto/index.html" target="_self">Poop Emoji Kakizacsi Tartó</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1681,7 +1699,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-4204 status-publish first instock product_cat-gazdiknak product_cat-kiegeszitok product_tag-always-your-friend has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><a class="ct-media-container" href="../../../termek/always-your-friend-pamutzsak/index.html" aria-label="Always Your Friend Pamutzsák"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="Pouch">
 <source type="image/webp" srcset="../../../wp-content/uploads/2020/04/Pouch-300x300.jpg.webp 300w, ../../../wp-content/uploads/2020/04/Pouch-100x100.jpg.webp 100w, ../../../wp-content/uploads/2020/04/Pouch-600x600.jpg.webp 600w, ../../../wp-content/uploads/2020/04/Pouch-64x64.jpg.webp 64w, ../../../wp-content/uploads/2020/04/Pouch-150x150.jpg.webp 150w, ../../../wp-content/uploads/2020/04/Pouch-768x768.jpg.webp 768w, ../../../wp-content/uploads/2020/04/Pouch.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2020/04/Pouch-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2020/04/Pouch-300x300.jpg 300w, ../../../wp-content/uploads/2020/04/Pouch-100x100.jpg 100w, ../../../wp-content/uploads/2020/04/Pouch-600x600.jpg 600w, ../../../wp-content/uploads/2020/04/Pouch-64x64.jpg 64w, ../../../wp-content/uploads/2020/04/Pouch-150x150.jpg 150w, ../../../wp-content/uploads/2020/04/Pouch-768x768.jpg 768w, ../../../wp-content/uploads/2020/04/Pouch.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Always Your Friend Pamutzsák"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2020/04/Pouch-300x300.jpg" alt="Always Your Friend Pamutzsák – kutyakiegészítő" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2020/04/Pouch-300x300.jpg 300w, ../../../wp-content/uploads/2020/04/Pouch-100x100.jpg 100w, ../../../wp-content/uploads/2020/04/Pouch-600x600.jpg 600w, ../../../wp-content/uploads/2020/04/Pouch-64x64.jpg 64w, ../../../wp-content/uploads/2020/04/Pouch-150x150.jpg 150w, ../../../wp-content/uploads/2020/04/Pouch-768x768.jpg 768w, ../../../wp-content/uploads/2020/04/Pouch.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/always-your-friend-pamutzsak/index.html" target="_self">Always Your Friend Pamutzsák</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1691,7 +1709,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-3307 status-publish instock product_cat-gazdiknak product_tag-gazdiknak product_tag-karkoto has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><a class="ct-media-container" href="../../../termek/mancsos-karkoto-kek/index.html" aria-label="Mancsos Karkötő - Kék"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="mancsos-karkoto-kek">
 <source type="image/webp" srcset="../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg.webp 300w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-100x100.jpg.webp 100w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-600x600.jpg.webp 600w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-64x64.jpg.webp 64w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-150x150.jpg.webp 150w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-768x768.jpg.webp 768w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg 300w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-100x100.jpg 100w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-600x600.jpg 600w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-64x64.jpg 64w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-150x150.jpg 150w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-768x768.jpg 768w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Mancsos Karkötő - Kék"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg" alt="Mancsos Karkötő - Kék – kutyatermék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-300x300.jpg 300w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-100x100.jpg 100w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-600x600.jpg 600w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-64x64.jpg 64w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-150x150.jpg 150w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek-768x768.jpg 768w, ../../../wp-content/uploads/2019/12/mancsos-karkoto-kek.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/mancsos-karkoto-kek/index.html" target="_self">Mancsos Karkötő &#8211; Kék</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1701,7 +1719,7 @@ ul.products li.product figure{position:relative}
 <li class="product type-product post-2519 status-publish instock product_cat-gazdiknak product_tag-bf product_tag-black-friday product_tag-gazdiknak product_tag-karkoto has-post-thumbnail shipping-taxable purchasable product-type-simple">
 	<figure ><a class="ct-media-container" href="../../../termek/mancsos-karkoto-matt-fekete/index.html" aria-label="Mancsos Karkötő - Matt Fekete"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="letöltés (2)">
 <source type="image/webp" srcset="../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-300x300.jpg.webp 300w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-100x100.jpg.webp 100w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-600x600.jpg.webp 600w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-64x64.jpg.webp 64w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-150x150.jpg.webp 150w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-768x768.jpg.webp 768w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-300x300.jpg 300w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-100x100.jpg 100w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-600x600.jpg 600w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-64x64.jpg 64w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-150x150.jpg 150w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-768x768.jpg 768w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Mancsos Karkötő - Matt Fekete"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-300x300.jpg" alt="Mancsos Karkötő - Matt Fekete – kutyatermék" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-300x300.jpg 300w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-100x100.jpg 100w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-600x600.jpg 600w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-64x64.jpg 64w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-150x150.jpg 150w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1-768x768.jpg 768w, ../../../wp-content/uploads/2019/10/let%C3%B6lt%C3%A9s-2-1.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/mancsos-karkoto-matt-fekete/index.html" target="_self">Mancsos Karkötő &#8211; Matt Fekete</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></span>
@@ -1711,7 +1729,7 @@ ul.products li.product figure{position:relative}
 <li class="wvs-archive-product-wrapper product type-product post-2188 status-publish last instock product_cat-kiegeszitok has-post-thumbnail shipping-taxable purchasable product-type-variable">
 	<figure ><a class="ct-media-container" href="../../../termek/szilikon-adagolokanal-csipesszel/index.html" aria-label="Szilikon Adagolókanál Csipesszel"><picture loading="lazy" decoding="async" itemprop="image" class="wvs-archive-product-image wp-post-image" style="aspect-ratio: 1/1;" title="szilikon_adagolokanal_kutya_cica">
 <source type="image/webp" srcset="../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-300x300.jpg.webp 300w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-100x100.jpg.webp 100w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-600x600.jpg.webp 600w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-64x64.jpg.webp 64w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-150x150.jpg.webp 150w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-768x768.jpg.webp 768w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
-<img width="300" height="300" src="../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-300x300.jpg" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-300x300.jpg 300w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-100x100.jpg 100w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-600x600.jpg 600w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-64x64.jpg 64w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-150x150.jpg 150w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-768x768.jpg 768w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image" alt="Szilikon Adagolókanál Csipesszel"/>
+<img width="300" height="300" src="../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-300x300.jpg" alt="Szilikon Adagolókanál Csipesszel – kutyakiegészítő" loading="lazy" decoding="async" srcset="../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-300x300.jpg 300w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-100x100.jpg 100w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-600x600.jpg 600w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-64x64.jpg 64w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-150x150.jpg 150w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica-768x768.jpg 768w, ../../../wp-content/uploads/2019/10/szilikon_adagolokanal_kutya_cica.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px" itemprop="image"/>
 </picture>
 </a></figure><h2 class="woocommerce-loop-product__title"><a class="woocommerce-LoopProduct-link woocommerce-loop-product__link" href="../../../termek/szilikon-adagolokanal-csipesszel/index.html" target="_self">Szilikon Adagolókanál Csipesszel</a></h2>
 	<span class="price"><span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>2 690&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true"><bdi>2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span><span class="screen-reader-text">Ártartomány: 2 690&nbsp;&#70;&#116; - 2 990&nbsp;&#70;&#116;</span></span>
@@ -2236,5 +2254,5 @@ ul.products li.product figure{position:relative}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 11:14:33 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 12:38:32 -->
 <!-- QUIC.cloud CCSS in queue -->
