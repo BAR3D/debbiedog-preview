@@ -68,7 +68,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/b7125b8d2a98851e347c22ad333210e0.css" />
+<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/124255e97a6f574522fbaf7245feb17e.css" />
 
 
 
@@ -987,12 +987,13 @@ ol,ul{box-sizing:border-box}:root :where(.wp-block-list.has-background){padding:
 		reveal();
 		cartBump();
 
-		// A hangulat-réteg a betöltő eltűnése után indul, hogy ne terhelje az első festést
+		// A hangulat-réteg a betöltő elhalványodásának kezdetén indul (a betöltés alatt nem terheli az első festést),
+		// így a főoldal a betöltő alatt már a díszítéssel együtt tűnik elő
 		var go = function () { ambient(); };
 		if (h.classList.contains('dd-loading')) {
 			var iv = setInterval(function () {
-				if (!h.classList.contains('dd-loading')) { clearInterval(iv); go(); }
-			}, 250);
+				if (!h.classList.contains('dd-loading') || h.classList.contains('dd-leaving')) { clearInterval(iv); go(); }
+			}, 120);
 		} else if ('requestIdleCallback' in w) {
 			w.requestIdleCallback(go, { timeout: 1500 });
 		} else {
@@ -1032,5 +1033,5 @@ ol,ul{box-sizing:border-box}:root :where(.wp-block-list.has-background){padding:
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 21:05:32 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 09:14:07 -->
 <!-- QUIC.cloud CCSS in queue -->

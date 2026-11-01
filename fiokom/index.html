@@ -64,7 +64,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/bd8fcffaf2c7e8a140994bb14bd5acaf.css" />
+<link data-optimized="2" rel="stylesheet" href="../wp-content/litespeed/css/4819618a068d42c302cec073df7bec97.css" />
 
 
 
@@ -718,15 +718,15 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 								</span>
 								<em class="value">-</em>
 							</li>
-													<li class="today">
+													<li >
 								<span class="day">
-									Szombat																			(ma)									:
+									Szombat									:
 								</span>
 								<em class="value">-</em>
 							</li>
-													<li >
+													<li class="today">
 								<span class="day">
-									Vasárnap									:
+									Vasárnap																			(ma)									:
 								</span>
 								<em class="value">-</em>
 							</li>
@@ -1092,12 +1092,13 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 		reveal();
 		cartBump();
 
-		// A hangulat-réteg a betöltő eltűnése után indul, hogy ne terhelje az első festést
+		// A hangulat-réteg a betöltő elhalványodásának kezdetén indul (a betöltés alatt nem terheli az első festést),
+		// így a főoldal a betöltő alatt már a díszítéssel együtt tűnik elő
 		var go = function () { ambient(); };
 		if (h.classList.contains('dd-loading')) {
 			var iv = setInterval(function () {
-				if (!h.classList.contains('dd-loading')) { clearInterval(iv); go(); }
-			}, 250);
+				if (!h.classList.contains('dd-loading') || h.classList.contains('dd-leaving')) { clearInterval(iv); go(); }
+			}, 120);
 		} else if ('requestIdleCallback' in w) {
 			w.requestIdleCallback(go, { timeout: 1500 });
 		} else {
@@ -1137,5 +1138,5 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-10-31 21:05:25 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 09:14:00 -->
 <!-- QUIC.cloud CCSS in queue -->
