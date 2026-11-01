@@ -1110,8 +1110,9 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 })();
 
 </script>
-<style id="dd-demo-css">body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}</style>
+<style id="dd-demo-css">body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}.dd-demo__toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483201;box-sizing:border-box;width:min(92vw,420px);padding:12px 14px;border-radius:12px;background:#FAF7F2;color:#083531;border:1px solid #2DA89E;font:500 14px/1.4 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)}.dd-demo__toast[hidden]{display:none}</style>
 <div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak és betöltő"><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="../index.html">Betöltő újra</button><span class="dd-demo__note" id="dd-demo-note" hidden><span id="dd-demo-msg"></span> <button type="button" data-force hidden>Animációk megmutatása</button><button type="button" data-unforce hidden>Animációk kikapcsolása</button></span></div>
+<div class="dd-demo__toast" id="dd-demo-toast" role="status" aria-live="polite" hidden></div>
 <script id="dd-demo-js">
 (function () {
   var d = document, h = d.documentElement, bar = d.getElementById('dd-demo');
@@ -1131,6 +1132,19 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
     else if (b.hasAttribute('data-force')) { try { sessionStorage.removeItem('ddDemoOff'); sessionStorage.setItem('ddMotion', 'on'); } catch (x) {} location.reload(); }
     else if (b.hasAttribute('data-unforce')) { try { sessionStorage.setItem('ddDemoOff', '1'); sessionStorage.removeItem('ddMotion'); } catch (x) {} location.reload(); }
   });
+  // A statikus előnézeten nincs kosár és fizetés: a "Kosárba" gombok érthető üzenetet adnak a néma semmi helyett
+  var toast = d.getElementById('dd-demo-toast'), tt;
+  function say() {
+    if (!toast) { return; }
+    toast.textContent = 'Ez csak előnézet, itt nem lehet rendelést leadni. A kosár és a fizetés az élesítés előtt teszt-környezetben lesz kipróbálható.';
+    toast.hidden = false; clearTimeout(tt); tt = setTimeout(function () { toast.hidden = true; }, 7000);
+  }
+  d.addEventListener('click', function (e) {
+    if (e.target.closest('.single_add_to_cart_button, .add_to_cart_button, .added_to_cart')) { e.preventDefault(); say(); }
+  });
+  d.addEventListener('submit', function (e) {
+    if (e.target.matches && e.target.matches('form.cart')) { e.preventDefault(); say(); }
+  });
 })();
 </script>
 
@@ -1138,5 +1152,5 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 09:14:00 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 09:24:26 -->
 <!-- QUIC.cloud CCSS in queue -->
