@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="hu" data-season="autumn">
 <head>
-<script id="dd-demo-pre">(function(){try{var q=location.search,s=sessionStorage;if(/[?&]motion=off\b/.test(q)){s.setItem('ddDemoOff','1');}else if(/[?&]motion=on\b/.test(q)){s.removeItem('ddDemoOff');}if(!s.getItem('ddDemoOff')){s.setItem('ddMotion','on');}}catch(e){}})();</script>
+<script id="dd-demo-pre">window.DDPreview=true;(function(){try{var q=location.search,s=sessionStorage;if(/[?&]demo=1\b/.test(q)){s.setItem('ddDemo','1');}else if(/[?&]demo=0\b/.test(q)){s.removeItem('ddDemo');}if(s.getItem('ddDemo')){document.documentElement.classList.add('dd-demo-on');}if(/[?&]motion=off\b/.test(q)){s.setItem('ddDemoOff','1');}else if(/[?&]motion=on\b/.test(q)){s.removeItem('ddDemoOff');}if(!s.getItem('ddDemoOff')){s.setItem('ddMotion','on');}}catch(e){}})();</script>
 	
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
@@ -72,7 +72,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="../../../../../wp-content/litespeed/css/124255e97a6f574522fbaf7245feb17e.css" />
+<link data-optimized="2" rel="stylesheet" href="../../../../../wp-content/litespeed/css/f96fb3f96ebbf6cae700ff0b7c3cfe88.css" />
 
 
 
@@ -940,8 +940,6 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 	if (reduce) { return; }
 
-	function rand(i, k) { return Math.abs((Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1); }
-
 	/* A hangulat-réteg a tartalom mögött van: ehhez az oldal krém hátterével azonos színű szakaszok (fix/ragadós elemek kivételével)
 	   átlátszóvá válnak. Látványra semmi nem változik, a kártyák, képek és a fejléc/lábléc saját háttere megmarad. */
 	function clearBackdrops() {
@@ -960,34 +958,30 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 		}
 	}
 
-	/* ---------- 1. Évszakos hangulat-réteg: lassú, jól látható részecskék és fény a bemutatkozó oldalak háttérében ---------- */
+	/* ---------- 1. Hangulat-réteg: évszak + időjárás (fx.js), a bemutatkozó oldalak háttérében ---------- */
+	var ambientTries = 0;
+
 	function ambient() {
-		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-ambient')) { return; }
+		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-fx--ambient')) { return; }
 
 		var conn = navigator.connection;
 		if (conn && conn.saveData) { return; }
 		if (navigator.deviceMemory && navigator.deviceMemory <= 2) { return; }
 
-		var box = d.createElement('div');
-		box.className = 'dd-ambient';
-		box.setAttribute('aria-hidden', 'true');
+		// a motor (fx.js) késleltetve töltődik: ha még nincs kész, röviden újrapróbáljuk
+		if (!w.DDFx) { if (ambientTries++ < 25) { w.setTimeout(ambient, 160); } return; }
 
-		var n = w.innerWidth < 700 ? 12 : 20, out = '';
-		for (var i = 0; i < n; i++) {
-			var t = (3.6 + rand(i, 3) * 2.8).toFixed(1);
-			out += '<i class="dd-p" style="--x:' + (rand(i, 1) * 96 + 2).toFixed(1) + '%;--s:' + (8 + Math.round(rand(i, 2) * 10)) +
-				'px;--t:' + t + 's;--d:-' + (rand(i, 4) * t * 3.4).toFixed(1) + 's;--dx:' + Math.round((rand(i, 5) - 0.5) * 14) + 'vw"></i>';
-		}
-		box.innerHTML = out;
-		d.body.appendChild(box);
+		var cv = d.createElement('canvas');
+		cv.className = 'dd-fx dd-fx--ambient';
+		cv.setAttribute('aria-hidden', 'true');
+		d.body.appendChild(cv);
+		w.DDFx.start(cv);
 
 		clearBackdrops();
 		h.classList.add('dd-ambient-on');
 
-		// Ha a lap nem látszik, a részecskék megállnak (nem pazarolunk energiát)
-		d.addEventListener('visibilitychange', function () {
-			box.classList.toggle('dd-paused', d.hidden);
-		});
+		// hely szerinti időjárás: csak ha a látogató már engedélyezte a helymeghatározást, vagy rákattint a gombra
+		w.DDFx.initWeather();
 	}
 
 	/* ---------- 2. Görgetéses megjelenés: csak a képernyőn kívüli elemekre ---------- */
@@ -1066,8 +1060,8 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 })();
 
 </script>
-<style id="dd-demo-css">body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}.dd-demo__toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483201;box-sizing:border-box;width:min(92vw,420px);padding:12px 14px;border-radius:12px;background:#FAF7F2;color:#083531;border:1px solid #2DA89E;font:500 14px/1.4 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)}.dd-demo__toast[hidden]{display:none}</style>
-<div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak és betöltő"><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="../../../../../index.html">Betöltő újra</button><span class="dd-demo__note" id="dd-demo-note" hidden><span id="dd-demo-msg"></span> <button type="button" data-force hidden>Animációk megmutatása</button><button type="button" data-unforce hidden>Animációk kikapcsolása</button></span></div>
+<style id="dd-demo-css">.dd-demo{display:none!important}html.dd-demo-on .dd-demo{display:flex!important}html.dd-demo-on body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}.dd-demo .dd-demo__tog{display:none;font-weight:600}.dd-demo.is-closed>:not(.dd-demo__tog){display:none!important}@media (max-width:700px){.dd-demo .dd-demo__tog{display:inline-flex}.dd-demo{bottom:8px;max-width:calc(100vw - 16px)}.dd-demo.is-closed{padding:6px 8px}}.dd-demo__wx{display:inline-flex;align-items:center;gap:6px}.dd-demo__wx[hidden]{display:none}.dd-demo select{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:5px 8px;max-width:48vw}.dd-demo select option{color:#083531;background:#FAF7F2}html.dd-demo-on .dd-demo__toast{bottom:88px}.dd-demo__toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483201;box-sizing:border-box;width:min(92vw,420px);padding:12px 14px;border-radius:12px;background:#FAF7F2;color:#083531;border:1px solid #2DA89E;font:500 14px/1.4 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)}.dd-demo__toast[hidden]{display:none}</style>
+<div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak, időjárás és betöltő"><button type="button" class="dd-demo__tog" data-tog aria-expanded="true">Bezár ▾</button><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="../../../../../index.html">Betöltő újra</button><label class="dd-demo__wx" hidden title="Az éles oldalon a látogató helye szerinti valós időjárás látszik (szerver kell hozzá); itt az összes időjárást kipróbálhatod."><span>Időjárás:</span><select data-wx aria-label="Időjárás kipróbálása"><option value="">Automatikus (évszak szerint)</option><option value="clear">Napos</option><option value="partly">Részben felhős</option><option value="clouds">Felhős</option><option value="fog">Köd</option><option value="drizzle">Szitálás</option><option value="rain">Eső</option><option value="downpour">Felhőszakadás</option><option value="storm">Zivatar, villámlás</option><option value="snow">Havazás</option><option value="blizzard">Hóvihar</option><option value="sleet">Ónos eső</option><option value="wind">Szeles</option><option value="night">Éjszaka</option></select></label><span class="dd-demo__note" id="dd-demo-note" hidden><span id="dd-demo-msg"></span> <button type="button" data-force hidden>Animációk megmutatása</button><button type="button" data-unforce hidden>Animációk kikapcsolása</button></span></div>
 <div class="dd-demo__toast" id="dd-demo-toast" role="status" aria-live="polite" hidden></div>
 <script id="dd-demo-js">
 (function () {
@@ -1075,6 +1069,17 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
   if (!bar) { return; }
   function mark() { var s = h.getAttribute('data-season'); [].forEach.call(bar.querySelectorAll('[data-s]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-s') === s ? 'true' : 'false'); }); }
   mark();
+  // telefonon alapból összecsukva (kis "Effektek" gomb), hogy ne takarja a tartalmat
+  var tog = bar.querySelector('[data-tog]');
+  function setClosed(c) { bar.classList.toggle('is-closed', c); if (tog) { tog.setAttribute('aria-expanded', c ? 'false' : 'true'); tog.textContent = c ? 'Effektek ▴' : 'Bezár ▾'; } }
+  if (window.matchMedia && matchMedia('(max-width: 700px)').matches) { setClosed(true); }
+  // időjárás-választó: csak ott, ahol az effekt-motor is fut
+  var wxl = bar.querySelector('.dd-demo__wx'), wxs = bar.querySelector('[data-wx]');
+  if (wxl && wxs && window.DDFx) {
+    wxl.hidden = false;
+    var cur = window.DDFx.current(); if (cur && cur !== 'live') { wxs.value = cur; }
+    wxs.addEventListener('change', function () { window.DDFx.set(wxs.value || null); });
+  }
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
     var note = d.getElementById('dd-demo-note'), msg = d.getElementById('dd-demo-msg');
     note.hidden = false;
@@ -1083,7 +1088,8 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
   }
   bar.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) { return; }
-    if (b.hasAttribute('data-s')) { if (window.DDMotion) { window.DDMotion.season(b.getAttribute('data-s')); } mark(); }
+    if (b.hasAttribute('data-tog')) { setClosed(!bar.classList.contains('is-closed')); }
+    else if (b.hasAttribute('data-s')) { if (window.DDMotion) { window.DDMotion.season(b.getAttribute('data-s')); } mark(); }
     else if (b.hasAttribute('data-replay')) { if (window.DDMotion) { window.DDMotion.replay(b.getAttribute('data-replay') + '?loader=1'); } }
     else if (b.hasAttribute('data-force')) { try { sessionStorage.removeItem('ddDemoOff'); sessionStorage.setItem('ddMotion', 'on'); } catch (x) {} location.reload(); }
     else if (b.hasAttribute('data-unforce')) { try { sessionStorage.setItem('ddDemoOff', '1'); sessionStorage.removeItem('ddMotion'); } catch (x) {} location.reload(); }
@@ -1108,5 +1114,5 @@ img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 10:05:14 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 11:11:00 -->
 <!-- QUIC.cloud CCSS in queue -->

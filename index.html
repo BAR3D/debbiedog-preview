@@ -1,7 +1,814 @@
 <!doctype html>
 <html lang="hu" data-season="autumn" data-dd-intro="1" data-dd-ambient="1">
 <head>
-<script id="dd-demo-pre">(function(){try{var q=location.search,s=sessionStorage;if(/[?&]motion=off\b/.test(q)){s.setItem('ddDemoOff','1');}else if(/[?&]motion=on\b/.test(q)){s.removeItem('ddDemoOff');}if(!s.getItem('ddDemoOff')){s.setItem('ddMotion','on');}}catch(e){}})();</script>
+<script id="dd-demo-pre">window.DDPreview=true;(function(){try{var q=location.search,s=sessionStorage;if(/[?&]demo=1\b/.test(q)){s.setItem('ddDemo','1');}else if(/[?&]demo=0\b/.test(q)){s.removeItem('ddDemo');}if(s.getItem('ddDemo')){document.documentElement.classList.add('dd-demo-on');}if(/[?&]motion=off\b/.test(q)){s.setItem('ddDemoOff','1');}else if(/[?&]motion=on\b/.test(q)){s.removeItem('ddDemoOff');}if(!s.getItem('ddDemoOff')){s.setItem('ddMotion','on');}}catch(e){}})();</script>
+<script id="dd-fx">
+/* DebbieDog: évszakos és időjárás-effektek (canvas, éles, mélységrétegekkel).
+   Egy motor hajtja a betöltő képernyőt és az oldal háttér-rétegét, így a tempó ugyanaz.
+   A színek kizárólag a márka színei. Hálózati kérést csak a saját szerverünk időjárás-végpontjára küld,
+   és csak a látogató engedélyével (helymeghatározás); a böngésző sessionStorage-ában csak az állapot marad (sütit nem tesz). */
+(function (w) {
+	'use strict';
+
+	var d = w.document, h = d.documentElement;
+	if (w.DDFx) { return; }
+
+	var TAU = Math.PI * 2, sin = Math.sin, cos = Math.cos, abs = Math.abs, min = Math.min, max = Math.max, rnd = Math.random;
+	function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+	function rr(a, b) { return a + rnd() * (b - a); }
+	function pick(a) { return a[(rnd() * a.length) | 0]; }
+	function ease(cur, to, k) { return cur + (to - cur) * k; }
+
+	var C = {
+		cream: [250, 247, 242], pastel: [184, 224, 218], primary: [45, 168, 158], dark: [15, 79, 74],
+		coral: [232, 154, 123], deepcoral: [200, 125, 96], white: [255, 255, 255], warm: [255, 246, 232]
+	};
+	function rgba(c, a) { return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+	function mix(a, b, t) { return [Math.round(a[0] + (b[0] - a[0]) * t), Math.round(a[1] + (b[1] - a[1]) * t), Math.round(a[2] + (b[2] - a[2]) * t)]; }
+
+	var DPR = min(w.devicePixelRatio || 1, 2);
+
+	/* ---------- Kész képek (sprite-ok): egyszer rajzolva, a képkockákon csak másoljuk ---------- */
+
+	function sprite(wd, ht, fn) {
+		var c = d.createElement('canvas');
+		c.width = Math.ceil(wd * DPR); c.height = Math.ceil(ht * DPR);
+		var x = c.getContext('2d');
+		x.scale(DPR, DPR);
+		fn(x, wd, ht);
+		c.cw = wd; c.ch = ht;
+		return c;
+	}
+
+	// juhar-levél körvonala (jobb fele, 100×100-as rácson; a bal fele tükrözve)
+	var MAPLE_R = [[50, 3], [57, 19], [70, 13], [67, 33], [90, 30], [80, 47], [96, 59], [66, 66], [72, 84], [54, 73], [52, 98]];
+
+	var SPR = {};
+	function sprites(dark) {
+		var k = dark ? 'd' : 'l';
+		if (SPR[k]) { return SPR[k]; }
+		var s = SPR[k] = {}, g;
+
+		// puha pehely (a világos háttéren halvány türkiz gyűrű adja a kontrasztot)
+		s.flake = sprite(64, 64, function (x) {
+			if (!dark) {
+				g = x.createRadialGradient(32, 32, 4, 32, 32, 31);
+				g.addColorStop(0, rgba(C.primary, 0.34)); g.addColorStop(0.55, rgba(C.primary, 0.16)); g.addColorStop(1, rgba(C.primary, 0));
+				x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+			}
+			g = x.createRadialGradient(32, 32, 0, 32, 32, 20);
+			g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.6, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+			x.fillStyle = g; x.fillRect(0, 0, 64, 64);
+		});
+
+		// hókristály: 6 ág, mellékágakkal
+		s.crystal = sprite(96, 96, function (x) {
+			x.translate(48, 48); x.lineCap = 'round'; x.lineJoin = 'round';
+			for (var pass = 0; pass < 2; pass++) {
+				x.shadowColor = pass ? 'rgba(0,0,0,0)' : (dark ? rgba(C.pastel, 0.9) : 'rgba(255,255,255,1)');
+				x.shadowBlur = pass ? 0 : 6;
+				x.strokeStyle = pass ? 'rgba(255,255,255,.95)' : rgba(dark ? C.pastel : C.primary, 0.92);
+				x.lineWidth = pass ? 1.1 : 3;
+				for (var i = 0; i < 6; i++) {
+					x.save(); x.rotate(i * TAU / 6);
+					x.beginPath();
+					x.moveTo(0, 0); x.lineTo(0, -40);
+					x.moveTo(0, -15); x.lineTo(9, -26); x.moveTo(0, -15); x.lineTo(-9, -26);
+					x.moveTo(0, -28); x.lineTo(6, -36); x.moveTo(0, -28); x.lineTo(-6, -36);
+					x.stroke(); x.restore();
+				}
+			}
+		});
+
+		// szirom: szívszerűen bevágott, színátmenetes, finom erezettel
+		function petal(c1, c2) {
+			return sprite(64, 64, function (x) {
+				var gr = x.createLinearGradient(0, 4, 0, 60);
+				gr.addColorStop(0, c1); gr.addColorStop(1, c2);
+				x.fillStyle = gr;
+				x.beginPath();
+				x.moveTo(32, 60); x.bezierCurveTo(6, 44, 3, 16, 22, 6); x.quadraticCurveTo(28, 5, 32, 15); x.quadraticCurveTo(36, 5, 42, 6);
+				x.bezierCurveTo(61, 16, 58, 44, 32, 60); x.closePath(); x.fill();
+				x.strokeStyle = 'rgba(180,90,70,.22)'; x.lineWidth = 1;
+				x.beginPath(); x.moveTo(32, 58); x.lineTo(32, 20); x.moveTo(32, 46); x.lineTo(22, 30); x.moveTo(32, 46); x.lineTo(42, 30); x.stroke();
+			});
+		}
+		s.petals = [petal('rgba(255,242,236,.97)', 'rgba(232,154,123,.93)'), petal('rgba(244,251,250,.97)', 'rgba(126,203,193,.92)'), petal('rgba(255,228,218,.97)', 'rgba(222,128,98,.92)')];
+
+		// levél: sima és juhar, őszi márka-árnyalatokban
+		function leaf(shape, col) {
+			return sprite(96, 96, function (x) {
+				x.translate(48, 48);
+				var gr = x.createLinearGradient(0, -44, 0, 44);
+				gr.addColorStop(0, rgba(mix(col, C.white, 0.3), 0.97)); gr.addColorStop(1, rgba(col, 0.97));
+				x.fillStyle = gr; x.beginPath();
+				if (shape === 0) {
+					x.moveTo(0, -42); x.bezierCurveTo(34, -22, 36, 18, 0, 44); x.bezierCurveTo(-36, 18, -34, -22, 0, -42);
+				} else {
+					var i, p;
+					x.moveTo((MAPLE_R[0][0] - 50) * 0.9, (MAPLE_R[0][1] - 50) * 0.9);
+					for (i = 1; i < MAPLE_R.length; i++) { p = MAPLE_R[i]; x.lineTo((p[0] - 50) * 0.9, (p[1] - 50) * 0.9); }
+					for (i = MAPLE_R.length - 2; i >= 1; i--) { p = MAPLE_R[i]; x.lineTo((50 - p[0]) * 0.9, (p[1] - 50) * 0.9); }
+				}
+				x.closePath(); x.fill();
+				x.lineCap = 'round'; x.strokeStyle = rgba(mix(col, C.dark, 0.45), 0.5); x.lineWidth = 1.5;
+				x.beginPath();
+				if (shape === 0) {
+					x.moveTo(0, 46); x.lineTo(0, -34);
+					for (var v = 0; v < 4; v++) { var yy = 30 - v * 18; x.moveTo(0, yy); x.lineTo(15, yy - 12); x.moveTo(0, yy); x.lineTo(-15, yy - 12); }
+				} else {
+					x.moveTo(0, 46); x.lineTo(0, -40); x.moveTo(0, 22); x.lineTo(36, -2); x.moveTo(0, 22); x.lineTo(-36, -2); x.moveTo(0, 6); x.lineTo(22, -26); x.moveTo(0, 6); x.lineTo(-22, -26);
+				}
+				x.stroke();
+			});
+		}
+		s.leaves = [leaf(0, C.coral), leaf(1, C.coral), leaf(1, C.deepcoral), leaf(0, C.deepcoral), leaf(1, C.primary), leaf(0, mix(C.dark, C.primary, 0.3)), leaf(1, mix(C.coral, C.pastel, 0.45))];
+
+		// pitypang-szál: vékony szőrpamacs
+		s.seed = sprite(56, 56, function (x) {
+			x.translate(28, 20); x.lineCap = 'round';
+			for (var i = 0; i < 15; i++) {
+				var a = -Math.PI * 0.95 + i * (Math.PI * 0.9 / 14), l = 15 + (i % 2) * 2;
+				x.strokeStyle = rgba(C.primary, 0.5); x.lineWidth = 1.2;
+				x.beginPath(); x.moveTo(0, 0); x.lineTo(cos(a) * l, sin(a) * l + 4); x.stroke();
+				x.fillStyle = 'rgba(255,255,255,.95)'; x.beginPath(); x.arc(cos(a) * l, sin(a) * l + 4, 1.7, 0, TAU); x.fill();
+			}
+			x.strokeStyle = rgba(C.dark, 0.5); x.lineWidth = 1.2; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, 24); x.stroke();
+			x.fillStyle = rgba(C.dark, 0.6); x.beginPath(); x.ellipse(0, 26, 1.8, 3, 0, 0, TAU); x.fill();
+		});
+
+		// négyágú csillanás (hó-, jégpor)
+		s.spark = sprite(48, 48, function (x) {
+			x.translate(24, 24);
+			g = x.createRadialGradient(0, 0, 0, 0, 0, 22);
+			g.addColorStop(0, rgba(dark ? C.white : C.primary, 0.5)); g.addColorStop(1, rgba(dark ? C.white : C.primary, 0));
+			x.fillStyle = g; x.fillRect(-24, -24, 48, 48);
+			x.fillStyle = 'rgba(255,255,255,1)';
+			x.shadowColor = dark ? rgba(C.pastel, 1) : rgba(C.primary, 0.9); x.shadowBlur = 5;
+			x.beginPath(); x.moveTo(0, -20); x.quadraticCurveTo(1.5, -1.5, 20, 0); x.quadraticCurveTo(1.5, 1.5, 0, 20); x.quadraticCurveTo(-1.5, 1.5, -20, 0); x.quadraticCurveTo(-1.5, -1.5, 0, -20); x.fill();
+		});
+
+		// szentjánosbogár
+		s.fly = sprite(48, 48, function (x) {
+			g = x.createRadialGradient(24, 24, 0, 24, 24, 22);
+			g.addColorStop(0, 'rgba(255,248,226,1)'); g.addColorStop(0.18, 'rgba(255,236,190,.9)'); g.addColorStop(0.45, rgba(C.coral, 0.32)); g.addColorStop(1, rgba(C.coral, 0));
+			x.fillStyle = g; x.fillRect(0, 0, 48, 48);
+		});
+
+		// felhők: nappali (pasztell alj, fényes tető), viharos (mély türkiz)
+		function cloud(lo, hi, aLo, aHi) {
+			return sprite(480, 300, function (x) {
+				var blobs = [[110, 170, 78], [195, 138, 96], [290, 148, 92], [372, 176, 70], [245, 182, 104], [150, 186, 74], [330, 190, 66]], i, b;
+				for (i = 0; i < blobs.length; i++) {
+					b = blobs[i];
+					g = x.createRadialGradient(b[0], b[1] + 12, 0, b[0], b[1] + 12, b[2]);
+					g.addColorStop(0, rgba(lo, aLo)); g.addColorStop(0.6, rgba(lo, aLo * 0.55)); g.addColorStop(1, rgba(lo, 0));
+					x.fillStyle = g; x.fillRect(b[0] - b[2], b[1] - b[2] + 12, b[2] * 2, b[2] * 2);
+				}
+				for (i = 0; i < blobs.length; i++) {
+					b = blobs[i];
+					g = x.createRadialGradient(b[0], b[1] - 14, 0, b[0], b[1] - 14, b[2] * 0.85);
+					g.addColorStop(0, rgba(hi, aHi)); g.addColorStop(0.6, rgba(hi, aHi * 0.5)); g.addColorStop(1, rgba(hi, 0));
+					x.fillStyle = g; x.fillRect(b[0] - b[2], b[1] - b[2] - 14, b[2] * 2, b[2] * 2);
+				}
+			});
+		}
+		s.cloudLight = cloud(dark ? C.pastel : C.pastel, dark ? C.white : C.white, dark ? 0.2 : 0.62, dark ? 0.22 : 0.78);
+		s.cloudDark = cloud(dark ? C.pastel : C.dark, dark ? C.pastel : C.primary, dark ? 0.26 : 0.3, dark ? 0.18 : 0.17);
+
+		// ködsáv
+		s.fog = sprite(1100, 220, function (x) {
+			var bands = [[300, 110, 280, 0.9], [620, 100, 340, 1], [900, 118, 240, 0.8], [140, 104, 200, 0.7]];
+			for (var i = 0; i < bands.length; i++) {
+				var b = bands[i];
+				x.save(); x.translate(b[0], b[1]); x.scale(1, 0.34);
+				g = x.createRadialGradient(0, 0, 0, 0, 0, b[2]);
+				g.addColorStop(0, dark ? rgba(C.pastel, 0.3 * b[3]) : rgba(C.white, 0.85 * b[3])); g.addColorStop(0.5, dark ? rgba(C.pastel, 0.14 * b[3]) : rgba(C.pastel, 0.4 * b[3])); g.addColorStop(1, rgba(C.pastel, 0));
+				x.fillStyle = g; x.fillRect(-b[2], -b[2], b[2] * 2, b[2] * 2);
+				x.restore();
+			}
+		});
+
+		return s;
+	}
+
+	/* ---------- Jelenetek: évszak + időjárás ---------- */
+
+	var DEFAULTS = {
+		spring: { cond: 'partly', level: 1, day: true, wind: 0.2 },
+		summer: { cond: 'clear', level: 1, day: true, wind: 0.12 },
+		autumn: { cond: 'wind', level: 1, day: true, wind: 0.55 },
+		winter: { cond: 'snow', level: 2, day: true, wind: 0.15 }
+	};
+
+	var PRESETS = {
+		clear: { cond: 'clear', level: 1, day: true },
+		partly: { cond: 'partly', level: 1, day: true },
+		clouds: { cond: 'clouds', level: 2, day: true },
+		fog: { cond: 'fog', level: 2, day: true },
+		drizzle: { cond: 'drizzle', level: 1, day: true },
+		rain: { cond: 'rain', level: 2, day: true },
+		downpour: { cond: 'rain', level: 3, day: true, wind: 0.45 },
+		storm: { cond: 'storm', level: 2, thunder: true, day: true },
+		snow: { cond: 'snow', level: 2, day: true },
+		blizzard: { cond: 'snow', level: 3, day: true, wind: 0.8 },
+		sleet: { cond: 'sleet', level: 2, day: true },
+		wind: { cond: 'wind', level: 2, day: true, wind: 0.85 },
+		night: { cond: 'clear', level: 1, day: false }
+	};
+
+	var NAMES = { clear: 'Derült', partly: 'Részben felhős', clouds: 'Felhős', fog: 'Ködös', drizzle: 'Szitálás', rain: 'Esős', storm: 'Zivatar', snow: 'Havazás', sleet: 'Ónos eső', wind: 'Szeles' };
+
+	// az évszaki dísz (szirom, levél, pitypang…) mennyisége az időjárástól függően
+	var DECOR = { clear: 1, partly: 0.9, clouds: 0.65, fog: 0.35, drizzle: 0.3, rain: 0.1, storm: 0.15, snow: 0, sleet: 0, wind: 1.7 };
+	var SUNC = { spring: C.pastel, summer: C.coral, autumn: C.coral, winter: C.pastel };
+
+	// Mennyi mi legyen a jelenetben (1280×720-as képhez viszonyítva, a terület és a minőség szerint skálázva)
+	function plan(sc, A, q) {
+		var cond = sc.cond, L = clamp(sc.level || 1, 1, 3), sea = sc.season, day = sc.day !== false;
+		var wind = sc.wind != null ? sc.wind : ({ clear: 0.15, partly: 0.18, clouds: 0.2, fog: 0.05, drizzle: 0.2, rain: 0.35, storm: 0.7, snow: 0.18, sleet: 0.3, wind: 0.85 })[cond];
+		var m = DECOR[cond], k = A * q;
+		var p = {
+			rain: 0, snow: 0, crystal: 0, petal: 0, leaf: 0, seed: 0, mote: 0, firefly: 0, spark: 0,
+			clouds: 1, dark: 0, fog: 0, sun: 0, moon: 0, rays: 0, thunder: !!(sc.thunder || cond === 'storm'),
+			wind: wind, dir: (sc.drift != null && sc.drift < 0) ? -1 : 1, day: day
+		};
+
+		switch (cond) {
+		case 'clear': p.clouds = 1; p.sun = day ? 1 : 0; p.moon = day ? 0 : 1; p.rays = day ? (sea === 'summer' ? 1 : (sea === 'winter' ? 0.35 : 0.6)) : 0; break;
+		case 'partly': p.clouds = 4; p.sun = day ? 0.8 : 0; p.moon = day ? 0 : 0.8; p.rays = day ? 0.4 : 0; break;
+		case 'clouds': p.clouds = 8; p.dark = 0.12; p.sun = day ? 0.22 : 0; p.moon = day ? 0 : 0.3; break;
+		case 'fog': p.clouds = 3; p.fog = 1; p.sun = day ? 0.2 : 0; break;
+		case 'drizzle': p.clouds = 7; p.dark = 0.2; p.rain = 55; p.fog = 0.25; break;
+		case 'rain': p.clouds = 9; p.dark = 0.3 + 0.1 * L; p.rain = [0, 90, 150, 230][L]; p.fog = 0.2; break;
+		case 'storm': p.clouds = 10; p.dark = 0.6 + 0.07 * L; p.rain = [0, 140, 210, 300][L]; p.fog = 0.15; break;
+		case 'snow': p.clouds = 8; p.dark = 0.04; p.snow = [0, 70, 120, 200][L]; p.crystal = [0, 8, 14, 22][L]; p.fog = L > 2 ? 0.3 : 0.08; break;
+		case 'sleet': p.clouds = 9; p.dark = 0.26; p.rain = 70; p.snow = 50; p.fog = 0.15; break;
+		case 'wind': p.clouds = 5; p.sun = day ? 0.6 : 0; p.moon = day ? 0 : 0.6; p.rays = day ? 0.3 : 0; break;
+		}
+
+		if (sea === 'spring') { p.petal = 26 * m; p.mote = (day ? 26 : 8) * m; p.firefly = day ? 0 : 12 * m; }
+		if (sea === 'summer') { p.seed = 12 * m; p.mote = (day ? 34 : 10) * m; p.firefly = day ? 0 : 16 * m; if (cond === 'clear' || cond === 'partly') { p.rays = min(1, p.rays + 0.2); } }
+		if (sea === 'autumn') { p.leaf = 22 * max(m, 0.3); p.mote = 10 * m; }
+		if (sea === 'winter' && (cond === 'clear' || cond === 'partly' || cond === 'clouds' || cond === 'wind')) { p.spark = 20 * (cond === 'clouds' ? 0.6 : 1); }
+
+		p.rain *= k; p.snow *= k; p.crystal *= k; p.petal *= k; p.leaf *= k; p.seed *= k; p.mote *= k; p.firefly *= k; p.spark *= k;
+		p.clouds = Math.round(p.clouds * (0.6 + 0.4 * A));
+		return p;
+	}
+
+	function scene(base, season) {
+		var s = {}, k;
+		for (k in base) { if (base.hasOwnProperty(k)) { s[k] = base[k]; } }
+		s.season = season;
+		return s;
+	}
+
+	/* ---------- Az effekt-példány: egy vászon, egy jelenet ---------- */
+
+	function Fx(canvas, opts) {
+		this.cv = canvas; this.cx = canvas.getContext('2d');
+		this.dark = !!(opts && opts.dark);
+		this.S = sprites(this.dark);
+		this.P = { rain: [], snow: [], crystal: [], petal: [], leaf: [], seed: [], mote: [], firefly: [], spark: [], cloud: [], splash: [] };
+		this.t = 0; this.q = 1; this.acc = 0; this.n = 0; this.first = true;
+		this.fog = []; this.bolt = null; this.nextBolt = 5 + rnd() * 5;
+		this.L = { sun: 0, moon: 0, rays: 0, fog: 0, dark: 0 };
+		this.wind = { dir: 1, base: 0.2 };
+		this.running = false; this.raf = 0; this.last = 0;
+		this.size(); this.setScene(opts && opts.scene);
+	}
+
+	Fx.prototype.size = function () {
+		var W = this.cv.clientWidth || w.innerWidth || 1280, H = this.cv.clientHeight || w.innerHeight || 720;
+		this.w = W; this.h = H;
+		this.cv.width = Math.round(W * DPR); this.cv.height = Math.round(H * DPR);
+		this.cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+		this.A = clamp(W * H / (1280 * 720), 0.45, 1.5);
+		if (this.sc) { this.plan = plan(this.sc, this.A, this.q); }
+	};
+
+	Fx.prototype.setScene = function (sc) {
+		this.sc = sc || scene(DEFAULTS.spring, 'spring');
+		this.plan = plan(this.sc, this.A, this.q);
+		this.wind.dir = this.plan.dir;
+	};
+
+	function spawn(I, kind, scatter) {
+		var W = I.w, H = I.h, z = rnd(), o = { z: z, f: scatter ? 0 : 0, out: 0, ph: rnd() * TAU }, sc = scatter;
+		switch (kind) {
+		case 'rain': o.x = rnd() * (W + 240) - 120; o.y = sc ? rnd() * H : -rr(10, 160); o.b = min(3, (z * 4) | 0); break;
+		case 'snow': o.x = rnd() * (W + 120) - 60; o.y = sc ? rnd() * H : -rr(8, 60); o.s = 3.5 + z * z * 13; o.fr = rr(0.6, 1.6); o.am = rr(6, 20) * (0.5 + z); break;
+		case 'crystal': o.x = rnd() * (W + 120) - 60; o.y = sc ? rnd() * H : -rr(20, 80); o.s = 15 + z * 17; o.fr = rr(0.4, 1); o.am = rr(8, 22); o.r = rnd() * TAU; o.vr = rr(-0.7, 0.7); break;
+		case 'petal': o.x = rnd() * (W + 120) - 60; o.y = sc ? rnd() * H : -rr(20, 80); o.s = 9 + z * 11; o.fr = rr(0.5, 1.1); o.am = rr(22, 55); o.r = rnd() * TAU; o.vr = rr(-1.4, 1.4); o.i = (rnd() * 3) | 0; o.fl = rnd() * TAU; break;
+		case 'leaf': o.x = rnd() * (W + 160) - 80; o.y = sc ? rnd() * H : -rr(30, 120); o.s = 17 + z * 20; o.fr = rr(0.4, 0.9); o.am = rr(40, 95); o.r = rnd() * TAU; o.vr = rr(-1.1, 1.1); o.i = pick([0, 0, 0, 0, 3, 3, 3, 5, 5, 1, 2]); o.fl = rnd() * TAU; break;
+		case 'seed': o.x = rnd() * (W + 100) - 50; o.y = sc ? rnd() * H : H * rr(0.5, 1.05); o.s = 14 + z * 12; o.fr = rr(0.3, 0.7); o.am = rr(12, 30); o.r = rr(-0.5, 0.5); break;
+		case 'mote': o.x = rnd() * W; o.y = rnd() * H; o.s = 2.5 + z * 5; o.fr = rr(0.2, 0.6); o.am = rr(4, 14); o.tw = rr(0.5, 1.6); break;
+		case 'firefly': o.x = rnd() * W; o.y = H * rr(0.3, 1); o.s = 12 + z * 14; o.fr = rr(0.2, 0.5); o.am = rr(18, 40); o.tw = rr(0.4, 1); break;
+		case 'spark': o.x = rnd() * W; o.y = rnd() * H; o.s = 10 + z * 14; o.life = rr(1.8, 4); o.age = rnd() * o.life; break;
+		case 'cloud': o.x = rnd() * (W + 500) - 380; o.y = H * rr(-0.14, I.plan.dark > 0.3 ? 0.2 : 0.16); o.sc = rr(0.7, 1.35) * (0.6 + 0.4 * I.A); o.v = rr(5, 13); o.i = (rnd() * 3) | 0; o.a = rr(0.55, 1); break;
+		}
+		return o;
+	}
+
+	// a cél-darabszámhoz igazítás: hiányzót lassan pótol, a felesleget finoman elhalványítja
+	function balance(I, kind, want, dt) {
+		var arr = I.P[kind], live = 0, i, o;
+		for (i = 0; i < arr.length; i++) { if (!arr[i].out) { live++; } }
+		want = Math.round(want);
+		if (live < want) {
+			var add = I.first ? want - live : min(want - live, Math.ceil(want * dt * 1.2) + 1);
+			while (add-- > 0) { o = spawn(I, kind, true); o.f = I.first ? 1 : 0; arr.push(o); }
+		} else if (live > want) {
+			var cut = live - want;
+			for (i = arr.length - 1; i >= 0 && cut > 0; i--) { if (!arr[i].out) { arr[i].out = 1; cut--; } }
+		}
+	}
+
+	function fade(arr, dt) {
+		for (var i = arr.length - 1; i >= 0; i--) {
+			var o = arr[i];
+			if (o.out) { o.f -= dt / 1.1; if (o.f <= 0) { arr.splice(i, 1); } } else if (o.f < 1) { o.f = min(1, o.f + dt / 0.9); }
+		}
+	}
+
+	function makeBolt(I) {
+		var pts = [], x = I.w * rr(0.15, 0.85), y = -10, endY = I.h * rr(0.42, 0.78), br = [];
+		pts.push([x, y]);
+		while (y < endY) {
+			y += rr(18, 42); x += rr(-30, 30); pts.push([x, y]);
+			if (rnd() < 0.2 && pts.length > 3) {
+				var bx = x, by = y, seg = [[bx, by]], n = (rnd() * 4 + 3) | 0, dir = rnd() < 0.5 ? -1 : 1;
+				while (n--) { bx += dir * rr(8, 26); by += rr(14, 30); seg.push([bx, by]); }
+				br.push(seg);
+			}
+		}
+		return { pts: pts, br: br, t: 0, life: 0.6, top: [pts[0][0], 0] };
+	}
+
+	function boltEnv(t) {
+		if (t < 0.08) { return 1; }
+		if (t < 0.15) { return 0.28; }
+		if (t < 0.24) { return 0.85; }
+		return max(0, 0.85 * (1 - (t - 0.24) / 0.36));
+	}
+
+	function glow(cx, x, y, r, col, a) {
+		var g = cx.createRadialGradient(x, y, 0, x, y, r);
+		g.addColorStop(0, rgba(col, a)); g.addColorStop(1, rgba(col, 0));
+		cx.fillStyle = g; cx.fillRect(x - r, y - r, r * 2, r * 2);
+	}
+
+	Fx.prototype.frame = function (dt) {
+		dt = clamp(dt, 0.001, 0.05);
+		var I = this, cx = I.cx, W = I.w, H = I.h, p = I.plan, S = I.S, t = (I.t += dt), L = I.L, P = I.P, i, o, n;
+		var sea = I.sc.season, k = min(1, dt * 1.6);
+
+		// ha a vászon mérete közben megváltozott (pl. rejtett fülről előhozott oldal), újra méretezünk
+		if ((I.cv.clientWidth && I.cv.clientWidth !== I.w) || (I.cv.clientHeight && I.cv.clientHeight !== I.h)) { I.size(); W = I.w; H = I.h; p = I.plan; }
+
+		// teljesítmény-felügyelet: ha lassú a gép, csökkentjük a darabszámot
+		I.acc += dt; I.n++;
+		if (I.n >= 90) {
+			var avg = I.acc / I.n; I.acc = 0; I.n = 0;
+			if (avg > 1 / 38 && I.q > 0.5) { I.q = max(0.5, I.q - 0.15); I.plan = p = plan(I.sc, I.A, I.q); }
+		}
+
+		// széllökések
+		var gust = 1 + 0.4 * sin(t * 0.37) + 0.22 * sin(t * 1.13 + 1.7);
+		var wx = p.dir * (0.2 + 0.8 * p.wind) * gust;
+		var wpx = wx * 300;
+
+		// rétegek lágy átmenete
+		L.sun = ease(L.sun, p.sun, k * 0.6); L.moon = ease(L.moon, p.moon, k * 0.6); L.rays = ease(L.rays, p.rays, k * 0.5);
+		L.fog = ease(L.fog, p.fog, k * 0.5); L.dark = ease(L.dark, p.dark, k * 0.5);
+
+		balance(I, 'rain', p.rain, dt); balance(I, 'snow', p.snow, dt); balance(I, 'crystal', p.crystal, dt);
+		balance(I, 'petal', p.petal, dt); balance(I, 'leaf', p.leaf, dt); balance(I, 'seed', p.seed, dt);
+		balance(I, 'mote', p.mote, dt); balance(I, 'firefly', p.firefly, dt); balance(I, 'spark', p.spark, dt);
+		balance(I, 'cloud', p.clouds, dt);
+		if (!I.fog.length) { for (i = 0; i < 4; i++) { I.fog.push({ x: rnd() * W, y: H * (0.12 + i * 0.24), sc: rr(1, 1.7), v: rr(6, 14) * (i % 2 ? -1 : 1) }); } }
+		for (var key in P) { if (P.hasOwnProperty(key)) { fade(P[key], dt); } }
+		I.first = false;
+
+		cx.clearRect(0, 0, W, H);
+
+		// --- égbolt: nap / hold ---
+		var sx = W * 0.8, sy = H * 0.13, R = max(W, H) * 0.62, sc = SUNC[sea] || C.pastel;
+		if (L.sun > 0.01) {
+			var g = cx.createRadialGradient(sx, sy, 0, sx, sy, R);
+			g.addColorStop(0, rgba(C.warm, 0.7 * L.sun)); g.addColorStop(0.07, rgba(C.warm, 0.5 * L.sun)); g.addColorStop(0.3, rgba(sc, 0.34 * L.sun)); g.addColorStop(1, rgba(sc, 0));
+			cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+			glow(cx, sx, sy, 90, C.white, 0.5 * L.sun);
+		}
+		if (L.moon > 0.01) {
+			glow(cx, sx, sy, R * 0.6, C.pastel, 0.4 * L.moon);
+			cx.fillStyle = rgba(C.cream, 0.96 * L.moon); cx.beginPath(); cx.arc(sx, sy, 24, 0, TAU); cx.fill();
+			cx.fillStyle = rgba(C.pastel, 0.35 * L.moon); cx.beginPath(); cx.arc(sx - 7, sy - 5, 5, 0, TAU); cx.arc(sx + 8, sy + 7, 3.5, 0, TAU); cx.fill();
+		}
+		if (L.rays > 0.01) {
+			cx.save(); cx.translate(sx, sy);
+			var len = max(W, H) * 1.05;
+			for (i = 0; i < 8; i++) {
+				var a = 1.55 + i * 0.2 + sin(t * 0.22 + i * 1.3) * 0.045, wd = 0.045 + (i % 3) * 0.018;
+				var gr = cx.createLinearGradient(0, 0, cos(a) * len, sin(a) * len);
+				gr.addColorStop(0, rgba(C.warm, 0.2 * L.rays)); gr.addColorStop(0.55, rgba(sc, 0.07 * L.rays)); gr.addColorStop(1, rgba(sc, 0));
+				cx.fillStyle = gr; cx.beginPath(); cx.moveTo(0, 0); cx.lineTo(cos(a - wd) * len, sin(a - wd) * len); cx.lineTo(cos(a + wd) * len, sin(a + wd) * len); cx.closePath(); cx.fill();
+			}
+			cx.restore();
+		}
+
+		// --- felhők ---
+		var cl = P.cloud;
+		for (i = 0; i < cl.length; i++) {
+			o = cl[i];
+			o.x += o.v * dt * (0.6 + p.wind * 3.2) * p.dir;
+			var cw = 480 * o.sc;
+			if (p.dir > 0 && o.x > W + 60) { o.x = -cw; o.y = H * rr(-0.14, 0.16); } else if (p.dir < 0 && o.x < -cw - 60) { o.x = W + 60; o.y = H * rr(-0.14, 0.16); }
+			var ca = o.a * o.f * (this.dark ? 0.9 : 1);
+			if (L.dark < 0.98) { cx.globalAlpha = ca * (1 - L.dark); cx.drawImage(S.cloudLight, o.x, o.y, cw, 300 * o.sc); }
+			if (L.dark > 0.02) { cx.globalAlpha = ca * min(1, L.dark * 1.2); cx.drawImage(S.cloudDark, o.x, o.y, cw, 300 * o.sc); }
+		}
+
+		// --- köd ---
+		if (L.fog > 0.02) {
+			for (i = 0; i < I.fog.length; i++) {
+				o = I.fog[i]; o.x += o.v * dt * (1 + p.wind * 2);
+				var fw = 1100 * o.sc;
+				if (o.x > W) { o.x = -fw; } else if (o.x < -fw) { o.x = W; }
+				cx.globalAlpha = L.fog * 0.85; cx.drawImage(S.fog, o.x, o.y, fw, 220 * o.sc);
+			}
+		}
+		cx.globalAlpha = 1;
+
+		// --- apró fényes dolgok: por, szentjánosbogár, jégcsillanás ---
+		for (i = 0, n = P.mote; i < n.length; i++) {
+			o = n[i]; o.x += (sin(t * o.fr + o.ph) * o.am + wpx * 0.12) * dt; o.y += cos(t * o.fr * 0.8 + o.ph) * o.am * 0.5 * dt;
+			if (o.x < -10) { o.x = W + 10; } else if (o.x > W + 10) { o.x = -10; }
+			cx.globalAlpha = o.f * (0.28 + 0.4 * (0.5 + 0.5 * sin(t * o.tw + o.ph)));
+			cx.drawImage(S.flake, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+		}
+		for (i = 0, n = P.firefly; i < n.length; i++) {
+			o = n[i]; o.x += (sin(t * o.fr + o.ph) * o.am + wpx * 0.1) * dt; o.y += cos(t * o.fr * 1.3 + o.ph * 2) * o.am * 0.6 * dt;
+			if (o.x < -30) { o.x = W + 30; } else if (o.x > W + 30) { o.x = -30; }
+			cx.globalAlpha = o.f * max(0, sin(t * o.tw + o.ph)) * 0.95;
+			cx.drawImage(S.fly, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+		}
+		for (i = 0, n = P.spark; i < n.length; i++) {
+			o = n[i]; o.age += dt;
+			if (o.age > o.life) { o.age = 0; o.x = rnd() * W; o.y = rnd() * H; }
+			var tw = sin(o.age / o.life * Math.PI);
+			cx.globalAlpha = o.f * tw * tw;
+			cx.save(); cx.translate(o.x, o.y); cx.rotate(0.3 + tw * 0.6); var ss = o.s * (0.5 + 0.5 * tw);
+			cx.drawImage(S.spark, -ss, -ss, ss * 2, ss * 2); cx.restore();
+		}
+
+		// --- pitypangszálak ---
+		for (i = 0, n = P.seed; i < n.length; i++) {
+			o = n[i];
+			o.x += (wpx * 0.7 + 22 + sin(t * o.fr + o.ph) * o.am) * dt; o.y += (-5 + sin(t * o.fr * 0.7 + o.ph * 3) * 14) * dt;
+			if (o.x > W + 50) { o.x = -50; o.y = rnd() * H; } else if (o.x < -60) { o.x = W + 40; }
+			if (o.y < -40) { o.y = H + 30; } else if (o.y > H + 40) { o.y = -30; }
+			cx.globalAlpha = o.f * (0.45 + 0.5 * o.z);
+			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r + sin(t * o.fr + o.ph) * 0.35);
+			cx.drawImage(S.seed, -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
+		}
+
+		// --- szirmok és levelek: lebegés, billegés, a szél sodorja ---
+		function flutter(arr, sprs, grav, wm, spin) {
+			for (var j = 0; j < arr.length; j++) {
+				var q = arr[j], sw = sin(t * q.fr + q.ph);
+				q.y += (grav * (0.55 + q.z * 0.7) + abs(sw) * 10) * dt;
+				q.x += (wpx * wm * (0.45 + q.z * 0.6) + sw * q.am) * dt;
+				q.r += (q.vr * spin + sw * 0.5) * dt; q.fl += dt * (1.2 + q.z);
+				if (q.y > H + q.s * 2) { q.y = -q.s * 2; q.x = rnd() * (W + 160) - 80; }
+				if (q.x > W + 100) { q.x = -90; } else if (q.x < -100) { q.x = W + 90; }
+				cx.globalAlpha = q.f * (0.55 + 0.45 * q.z);
+				cx.save(); cx.translate(q.x, q.y); cx.rotate(q.r); cx.scale(0.35 + 0.65 * abs(cos(q.fl)), 1);
+				cx.drawImage(sprs[q.i], -q.s, -q.s, q.s * 2, q.s * 2); cx.restore();
+			}
+		}
+		flutter(P.petal, S.petals, 34, 0.6, 1);
+		flutter(P.leaf, S.leaves, 58, 0.9, 1);
+
+		// --- hó és hókristály ---
+		for (i = 0, n = P.snow; i < n.length; i++) {
+			o = n[i];
+			o.y += (26 + o.z * 70) * (1 + p.wind * 0.35) * dt; o.x += (wpx * 0.35 * (0.4 + o.z * 0.6) + sin(t * o.fr + o.ph) * o.am) * dt;
+			if (o.y > H + o.s) { o.y = -o.s; o.x = rnd() * (W + 120) - 60; }
+			if (o.x > W + 60) { o.x = -50; } else if (o.x < -60) { o.x = W + 50; }
+			cx.globalAlpha = o.f * (0.4 + 0.55 * o.z) * (o.z > 0.88 ? 0.7 : 1);
+			cx.drawImage(S.flake, o.x - o.s, o.y - o.s, o.s * 2, o.s * 2);
+		}
+		for (i = 0, n = P.crystal; i < n.length; i++) {
+			o = n[i];
+			o.y += (22 + o.z * 46) * (1 + p.wind * 0.3) * dt; o.x += (wpx * 0.3 + sin(t * o.fr + o.ph) * o.am) * dt; o.r += o.vr * dt;
+			if (o.y > H + o.s) { o.y = -o.s; o.x = rnd() * (W + 120) - 60; }
+			if (o.x > W + 60) { o.x = -50; } else if (o.x < -60) { o.x = W + 50; }
+			cx.globalAlpha = o.f * (0.5 + 0.5 * o.z);
+			cx.save(); cx.translate(o.x, o.y); cx.rotate(o.r); cx.drawImage(S.crystal, -o.s, -o.s, o.s * 2, o.s * 2); cx.restore();
+		}
+
+		// --- eső: sebességgel arányos csíkok, mélység szerint négy rétegben, a földet érő cseppek fröccsennek ---
+		var rain = P.rain;
+		if (rain.length) {
+			var rc = I.dark ? C.pastel : (L.dark > 0.5 ? mix(C.primary, C.dark, 0.4) : C.primary), lv = 1 + (I.sc.level || 1) * 0.08;
+			cx.lineCap = 'round';
+			for (var b = 0; b < 4; b++) {
+				cx.beginPath();
+				for (i = 0; i < rain.length; i++) {
+					o = rain[i]; if (o.b !== b) { continue; }
+					var vy = (620 + o.z * 520) * lv, vx = wx * 330 * (0.55 + o.z * 0.5) - 20;
+					o.y += vy * dt; o.x += vx * dt;
+					if (o.y > H) {
+						if (o.z > 0.55 && rnd() < 0.4 && P.splash.length < 50) { P.splash.push({ x: o.x, y: H - 1, r: 0, a: 0.5 }); }
+						o.y = -rr(10, 90); o.x = rnd() * (W + 240) - 120;
+					}
+					var ln = vy * 0.034, sp = Math.sqrt(vx * vx + vy * vy);
+					cx.moveTo(o.x, o.y); cx.lineTo(o.x - vx / sp * ln, o.y - vy / sp * ln);
+				}
+				cx.strokeStyle = rgba(rc, (0.16 + b * 0.1) * (I.dark ? 1.3 : 1));
+				cx.lineWidth = 0.7 + b * 0.38; cx.globalAlpha = 1;
+				cx.stroke();
+			}
+			for (i = P.splash.length - 1; i >= 0; i--) {
+				o = P.splash[i]; o.r += 36 * dt; o.a -= dt * 1.3;
+				if (o.a <= 0) { P.splash.splice(i, 1); continue; }
+				cx.strokeStyle = rgba(rc, o.a * 0.6); cx.lineWidth = 1; cx.beginPath(); cx.ellipse(o.x, o.y, o.r, o.r * 0.28, 0, 0, TAU); cx.stroke();
+			}
+		}
+
+		// --- villám: ritka, rövid, két felvillanás (nem villogó) ---
+		if (p.thunder) {
+			I.nextBolt -= dt;
+			if (I.nextBolt <= 0 && !I.bolt) { I.bolt = makeBolt(I); I.nextBolt = rr(7, 15); }
+			if (I.bolt) {
+				var bl = I.bolt; bl.t += dt;
+				var env = boltEnv(bl.t);
+				if (bl.t > bl.life) { I.bolt = null; } else {
+					cx.globalAlpha = 1;
+					glow(cx, bl.top[0], 0, H * 0.7, I.dark ? C.pastel : C.white, 0.5 * env);
+					cx.fillStyle = rgba(C.white, 0.16 * env); cx.fillRect(0, 0, W, H);
+					cx.lineJoin = 'round'; cx.lineCap = 'round';
+					var paths = [bl.pts].concat(bl.br), pi, qi, pts, st = [[16, rgba(C.pastel, 0.25 * env)], [6, rgba(C.primary, 0.5 * env)], [3.4, rgba(C.dark, 0.55 * env)], [1.6, 'rgba(255,255,255,' + (0.98 * env) + ')']];
+					for (var s2 = 0; s2 < st.length; s2++) {
+						cx.lineWidth = st[s2][0]; cx.strokeStyle = st[s2][1];
+						for (pi = 0; pi < paths.length; pi++) {
+							pts = paths[pi]; cx.beginPath(); cx.moveTo(pts[0][0], pts[0][1]);
+							for (qi = 1; qi < pts.length; qi++) { cx.lineTo(pts[qi][0], pts[qi][1]); }
+							cx.stroke();
+						}
+					}
+				}
+			}
+		}
+		cx.globalAlpha = 1;
+	};
+
+	Fx.prototype.start = function () {
+		var I = this;
+		if (I.running) { return; }
+		I.running = true; I.last = 0;
+		function loop(ts) {
+			if (!I.running) { return; }
+			var dt = I.last ? (ts - I.last) / 1000 : 0.016;
+			I.last = ts;
+			I.frame(dt);
+			I.raf = w.requestAnimationFrame(loop);
+		}
+		I.raf = w.requestAnimationFrame(loop);
+	};
+
+	Fx.prototype.stop = function () {
+		this.running = false;
+		if (this.raf) { w.cancelAnimationFrame(this.raf); this.raf = 0; }
+	};
+
+	/* ---------- Jelenet-választás: kipróbálás, hely szerinti időjárás, évszak ---------- */
+
+	var cfg = w.DDFxCfg || {};
+	var instances = [];
+
+	function store(k, v) {
+		try {
+			if (v === undefined) { return w.sessionStorage.getItem(k); }
+			if (v === null) { w.sessionStorage.removeItem(k); } else { w.sessionStorage.setItem(k, v); }
+		} catch (e) {}
+		return null;
+	}
+
+	function seasonNow() { var s = h.getAttribute('data-season'); return /^(spring|summer|autumn|winter)$/.test(s) ? s : 'spring'; }
+
+	// a déli féltekén az évszak fordított
+	function flip(sea, south) {
+		if (!south) { return sea; }
+		return ({ spring: 'autumn', summer: 'winter', autumn: 'spring', winter: 'summer' })[sea];
+	}
+
+	function readLive() {
+		var raw = store('ddWx'), o;
+		if (!raw || store('ddWxOn') !== '1') { return null; }
+		try { o = JSON.parse(raw); } catch (e) { return null; }
+		if (!o || !o.s || Date.now() - o.t > 20 * 60 * 1000) { return null; }
+		return o;
+	}
+
+	function resolve() {
+		var sea = seasonNow(), ov = store('ddWeather'), lv;
+		if (ov && PRESETS[ov]) { return scene(PRESETS[ov], sea); }
+		lv = readLive();
+		if (lv) { return scene(lv.s, flip(sea, lv.south)); }
+		return scene(DEFAULTS[sea], sea);
+	}
+
+	function applyAll() {
+		var sc = resolve();
+		for (var i = 0; i < instances.length; i++) { instances[i].setScene(sc); }
+		return sc;
+	}
+
+	/* ---------- Hely szerinti időjárás (csak engedéllyel, a saját szerverünkön át) ---------- */
+
+	var wxState = { phase: 'idle' };
+	var chip = null;
+
+	function livePossible() { return !!(cfg.endpoint && !w.DDPreview && w.navigator.geolocation && w.fetch); }
+
+	// a kis jelentés-pirula ikonjai (24×24-es rács, vonalas, a szöveg színét követik)
+	var CLOUD = 'M7 17.5h9.5a3.9 3.9 0 0 0 .5-7.77A5.4 5.4 0 0 0 6.7 10.4 3.6 3.6 0 0 0 7 17.5z';
+	var ICONS = {
+		pin: '<path fill="currentColor" d="M12 2a6 6 0 0 0-6 6c0 4.5 6 12 6 12s6-7.5 6-12a6 6 0 0 0-6-6zm0 8.2A2.2 2.2 0 1 1 12 5.8a2.2 2.2 0 0 1 0 4.4z"/>',
+		sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
+		moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+		partly: '<path d="M8.5 4.5v1.6M3.6 9.4h1.6M4.9 5.8l1.1 1.1M12.1 5.8 11 6.9"/><circle cx="8.5" cy="9.4" r="2.6"/><path d="M9.5 19h8a3.4 3.4 0 0 0 .4-6.8 4.7 4.7 0 0 0-8.9 1.2A2.9 2.9 0 0 0 9.5 19z"/>',
+		clouds: '<path d="' + CLOUD + '"/>',
+		fog: '<path d="M4 8h13M3 12h18M6 16h14M9 20h8"/>',
+		rain: '<path d="M7 14.5h9.5a3.9 3.9 0 0 0 .5-7.77A5.4 5.4 0 0 0 6.7 7.4 3.6 3.6 0 0 0 7 14.5zM8.5 17.5l-1 2.3M12.5 17.5l-1 2.3M16.5 17.5l-1 2.3"/>',
+		snow: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>',
+		storm: '<path d="M7 13.5h9.5a3.9 3.9 0 0 0 .5-7.77A5.4 5.4 0 0 0 6.7 6.4 3.6 3.6 0 0 0 7 13.5z"/><path fill="currentColor" stroke="none" d="m12.8 12-3 5h2.6l-1 4.2 4-5.7h-2.6z"/>',
+		wind: '<path d="M3 9h11a3 3 0 1 0-3-3M3 14h15a3 3 0 1 1-3 3M3 19h6"/>'
+	};
+	function iconFor(cond, day) {
+		if (cond === 'clear') { return day === false ? 'moon' : 'sun'; }
+		if (cond === 'drizzle' || cond === 'rain' || cond === 'sleet') { return 'rain'; }
+		return ICONS[cond] ? cond : 'clouds';
+	}
+	function svg(name) {
+		return '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" focusable="false" ' + (name === 'pin' ? '' : 'fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"') + '>' + ICONS[name] + '</svg>';
+	}
+
+	function getPos() {
+		return new Promise(function (ok, no) {
+			w.navigator.geolocation.getCurrentPosition(function (p) { ok(p.coords); }, no, { enableHighAccuracy: false, timeout: 9000, maximumAge: 30 * 60 * 1000 });
+		});
+	}
+
+	function fetchWx(lat, lon) {
+		var u = cfg.endpoint + (cfg.endpoint.indexOf('?') < 0 ? '?' : '&') + 'lat=' + lat.toFixed(2) + '&lon=' + lon.toFixed(2);
+		return w.fetch(u, { credentials: 'omit', headers: { 'Accept': 'application/json' } }).then(function (r) {
+			if (!r.ok) { throw new Error('wx ' + r.status); }
+			return r.json();
+		});
+	}
+
+	function goLive() {
+		wxState.phase = 'loading'; paintChip();
+		return getPos().then(function (c) {
+			return fetchWx(c.latitude, c.longitude).then(function (j) {
+				if (!j || !j.ok) { throw new Error('wx'); }
+				var sc = { cond: j.cond, level: j.level, thunder: !!j.thunder, day: j.day !== false, wind: j.wind, drift: j.drift };
+				store('ddWx', JSON.stringify({ t: Date.now(), s: sc, south: c.latitude < 0, temp: j.temp }));
+				store('ddWxOn', '1'); store('ddWeather', null);
+				wxState.phase = 'live'; applyAll(); paintChip();
+			});
+		}).catch(function () {
+			wxState.phase = 'error'; paintChip();
+			w.setTimeout(function () { wxState.phase = 'idle'; paintChip(); }, 4500);
+		});
+	}
+
+	function liveOff() { store('ddWxOn', null); wxState.phase = 'idle'; applyAll(); paintChip(); }
+
+	function paintChip() {
+		if (!chip) { return; }
+		var b = chip.btn, lbl = chip.lbl, src = chip.src, lv = readLive(), ph = wxState.phase, ico;
+		if (ph === 'live' && !lv) { ph = wxState.phase = 'idle'; } // lejárt vagy törölt élő adat
+		b.setAttribute('aria-pressed', ph === 'live' ? 'true' : 'false');
+		chip.root.setAttribute('data-state', ph);
+		src.hidden = ph !== 'live';
+		if (ph === 'loading') { ico = 'pin'; lbl.textContent = 'Lekérés…'; }
+		else if (ph === 'error') { ico = 'pin'; lbl.textContent = 'Nem elérhető'; }
+		else if (ph === 'live' && lv) {
+			ico = iconFor(lv.s.cond, lv.s.day);
+			lbl.textContent = (lv.temp != null ? Math.round(lv.temp) + ' °C · ' : '') + (NAMES[lv.s.cond] || '');
+		} else { ico = 'pin'; lbl.textContent = 'Helyi időjárás'; }
+		if (chip.ico.getAttribute('data-i') !== ico) { chip.ico.innerHTML = svg(ico); chip.ico.setAttribute('data-i', ico); }
+		b.title = ph === 'live' ? 'A te helyed aktuális időjárása. Kattints a kikapcsoláshoz.' : 'Az oldal effektjei a te helyed időjárását követik. A helyzetedet csak a böngésző engedélyével kérjük le, nem tároljuk.';
+	}
+
+	function chipMsg(text) {
+		if (!chip) { return; }
+		chip.msg.textContent = text; chip.msg.hidden = false;
+		w.clearTimeout(chip.mt); chip.mt = w.setTimeout(function () { chip.msg.hidden = true; }, 6500);
+	}
+
+	function buildChip() {
+		if (chip || !(livePossible() || w.DDPreview) || d.getElementById('dd-wx')) { return; }
+		var root = d.createElement('div');
+		root.className = 'dd-wx'; root.id = 'dd-wx'; root.setAttribute('role', 'group'); root.setAttribute('aria-label', 'Időjárás');
+		root.innerHTML = '<button type="button" class="dd-wx__btn" aria-pressed="false"><span class="dd-wx__ico" aria-hidden="true"></span><span class="dd-wx__lbl" aria-live="polite"></span></button><a class="dd-wx__src" href="https://www.met.no/en" target="_blank" rel="noopener noreferrer" title="Időjárás-adatok: MET Norway (CC BY 4.0)" hidden>met.no</a><span class="dd-wx__msg" role="status" hidden></span>';
+		d.body.appendChild(root);
+		chip = { root: root, btn: root.querySelector('button'), ico: root.querySelector('.dd-wx__ico'), lbl: root.querySelector('.dd-wx__lbl'), src: root.querySelector('.dd-wx__src'), msg: root.querySelector('.dd-wx__msg') };
+		chip.btn.addEventListener('click', function () {
+			if (w.DDPreview) { chipMsg('Az előnézeten a helyi időjárás nem érhető el. Az éles oldalon, a böngésző engedélyével, a te helyed időjárását mutatja.'); return; }
+			if (wxState.phase === 'loading') { return; }
+			if (wxState.phase === 'live') { liveOff(); } else { goLive(); }
+		});
+		if (readLive()) { wxState.phase = 'live'; }
+		paintChip();
+	}
+
+	function initWeather() {
+		if (w.DDPreview) { buildChip(); return; } // előnézet: csak a gomb látszik (a valós lekérés szerver nélkül nem megy)
+		if (!livePossible()) { return; }
+		if (readLive()) { buildChip(); return; }
+		var perm = w.navigator.permissions;
+		if (perm && perm.query) {
+			perm.query({ name: 'geolocation' }).then(function (st) {
+				if (st.state === 'granted') { buildChip(); goLive(); } // a helymeghatározás már be van kapcsolva: kérdés nélkül
+				else if (st.state === 'prompt') { buildChip(); }
+			}, function () { buildChip(); });
+		} else { buildChip(); }
+	}
+
+	/* ---------- Nyilvános felület ---------- */
+
+	w.DDFx = {
+		version: 1,
+		names: NAMES,
+		presets: PRESETS,
+		// effekt indítása egy vásznon; opts.dark: sötét háttéren (pl. téli betöltő)
+		start: function (canvas, opts) {
+			var I = new Fx(canvas, { dark: opts && opts.dark, scene: resolve() }), manual = !!(opts && opts.manual), rs;
+			instances.push(I);
+
+			function onResize() { w.clearTimeout(rs); rs = w.setTimeout(function () { I.size(); }, 180); }
+			// láthatatlan lapon az effekt megáll; a leállított (lebontott) példányt a láthatóság-váltás nem indítja újra
+			function onVis() { if (I.dead) { return; } if (d.hidden) { I.stop(); } else if (!manual) { I.start(); } }
+			w.addEventListener('resize', onResize);
+			d.addEventListener('visibilitychange', onVis);
+
+			I.destroy = function () {
+				I.dead = true; I.stop();
+				w.removeEventListener('resize', onResize);
+				d.removeEventListener('visibilitychange', onVis);
+			};
+			if (!manual) { I.start(); }
+			return I;
+		},
+		stop: function (I) { if (I.destroy) { I.destroy(); } else { I.stop(); } var i = instances.indexOf(I); if (i >= 0) { instances.splice(i, 1); } },
+		list: function () { return instances.slice(); },
+		// kipróbálás: ?weather=… vagy a vezérlősáv; null = vissza az évszak/hely szerintire
+		set: function (key) {
+			if (key && PRESETS[key]) { store('ddWeather', key); store('ddWxOn', null); wxState.phase = 'idle'; } else { store('ddWeather', null); }
+			paintChip();
+			return applyAll();
+		},
+		season: function () { return applyAll(); },
+		current: function () { return store('ddWeather') || (readLive() ? 'live' : null); },
+		initWeather: initWeather,
+		// tesztelés: koordinátából időjárás (a szerver-végponton át)
+		useCoords: function (lat, lon) {
+			return fetchWx(lat, lon).then(function (j) {
+				var sc = { cond: j.cond, level: j.level, thunder: !!j.thunder, day: j.day !== false, wind: j.wind, drift: j.drift };
+				store('ddWx', JSON.stringify({ t: Date.now(), s: sc, south: lat < 0, temp: j.temp })); store('ddWxOn', '1'); store('ddWeather', null);
+				wxState.phase = 'live'; applyAll(); paintChip(); return j;
+			});
+		}
+	};
+
+	// ?weather=rain (vagy snow, storm, fog…) a kipróbáláshoz; ?weather=auto a visszaállításhoz
+	try {
+		var wm = /[?&]weather=([a-z]+)\b/.exec(w.location.search);
+		if (wm) { if (PRESETS[wm[1]]) { store('ddWeather', wm[1]); store('ddWxOn', null); } else if (wm[1] === 'auto') { store('ddWeather', null); } }
+	} catch (e) {}
+
+	// A betöltő képernyő: ugyanaz a motor és ugyanaz a jelenet, mint az oldal háttér-rétegén, így a tempó is ugyanaz
+	function bootLoader() {
+		if (!h.classList.contains('dd-loading') || h.classList.contains('dd-reduce')) { return; }
+		var cv = d.querySelector('.dd-fx--loader');
+		if (!cv) { return; }
+		var I = w.DDFx.start(cv, { dark: seasonNow() === 'winter' });
+		if (!w.MutationObserver) { return; }
+		var mo = new w.MutationObserver(function () {
+			if (!h.classList.contains('dd-loading')) { mo.disconnect(); w.DDFx.stop(I); }
+		});
+		mo.observe(h, { attributes: true, attributeFilter: ['class'] });
+	}
+	if (d.readyState === 'loading') { d.addEventListener('DOMContentLoaded', bootLoader); } else { bootLoader(); }
+})(window);
+
+</script>
 	
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover">
@@ -22,7 +829,7 @@
 	
 	
 	<meta property="article:publisher" content="https://www.facebook.com/debbiedogwebshop/" />
-	<meta property="article:modified_time" content="2026-10-30T22:58:37+00:00" />
+	<meta property="article:modified_time" content="2026-11-01T09:56:50+00:00" />
 	
 	
 	
@@ -34,7 +841,7 @@
 
 
 
-<style id="dd-loader-css">:root { --dd-bg: var(--color-cream, #FAF7F2); --dd-fg: var(--color-dark, #0F4F4A); --dd-paw: var(--color-primary, #2DA89E); --dd-c1: var(--color-coral, #E89A7B); --dd-c2: var(--color-pastel, #B8E0DA); --dd-c3: var(--color-primary, #2DA89E); --dd-glow: radial-gradient(60% 50% at 18% 12%, rgba(184, 224, 218, .55), transparent 70%), radial-gradient(50% 45% at 88% 92%, rgba(232, 154, 123, .22), transparent 70%); } html[data-season="summer"] { --dd-bg: #E4EFE9; --dd-c1: #FFFFFF; --dd-c2: var(--color-pastel, #B8E0DA); --dd-c3: var(--color-primary, #2DA89E); --dd-glow: radial-gradient(34% 30% at 86% 10%, rgba(232, 154, 123, .55), rgba(232, 154, 123, 0) 70%), radial-gradient(60% 40% at 12% 100%, rgba(45, 168, 158, .22), transparent 70%); } html[data-season="autumn"] { --dd-c1: var(--color-coral, #E89A7B); --dd-c2: var(--color-primary, #2DA89E); --dd-c3: var(--color-dark, #0F4F4A); --dd-glow: radial-gradient(70% 45% at 50% 108%, rgba(232, 154, 123, .38), transparent 70%), radial-gradient(45% 40% at 10% 6%, rgba(184, 224, 218, .35), transparent 70%); } html[data-season="winter"] { --dd-bg: var(--color-dark, #0F4F4A); --dd-fg: var(--color-cream, #FAF7F2); --dd-paw: var(--color-pastel, #B8E0DA); --dd-c1: #FFFFFF; --dd-c2: var(--color-pastel, #B8E0DA); --dd-c3: #FFFFFF; --dd-glow: radial-gradient(55% 45% at 50% 42%, rgba(45, 168, 158, .38), transparent 72%), radial-gradient(40% 30% at 85% 8%, rgba(184, 224, 218, .20), transparent 70%); } .dd-loader { display: none; } html.dd-loading .dd-loader { display: grid; place-items: center; position: fixed; inset: 0; z-index: 2147483000; overflow: hidden; background: var(--dd-glow), var(--dd-bg); color: var(--dd-fg); animation: dd-failsafe 0s linear 4.6s forwards; } html.dd-leaving .dd-loader { pointer-events: none; animation: dd-fade 1.1s cubic-bezier(.4, 0, .2, 1) forwards; } html.dd-leaving .dd-loader__scene { animation: dd-scene-out .8s ease-in-out forwards; } .dd-loader__scene { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px; text-align: center; } .dd-trail { position: relative; width: min(400px, 84vw); height: 120px; } .dd-paw { position: absolute; left: var(--px); top: var(--py); width: 54px; height: 54px; margin: -27px 0 0 -27px; opacity: 0; transform: rotate(var(--pr)) scale(.4); animation: dd-step 1.7s ease-out var(--pd) infinite; } .dd-paw svg { display: block; width: 100%; height: 100%; fill: var(--dd-paw); } .dd-paw::after { content: ""; position: absolute; left: 50%; top: 50%; pointer-events: none; opacity: 0; } html[data-season="spring"] .dd-paw::after { width: 9px; height: 9px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 -9px 0 -1px var(--color-coral, #E89A7B), 0 9px 0 -1px var(--color-coral, #E89A7B), -9px 0 0 -1px var(--color-coral, #E89A7B), 9px 0 0 -1px var(--color-coral, #E89A7B); translate: -52px 0; animation: dd-bloom 1.7s ease-out var(--pd) infinite; } html[data-season="summer"] .dd-paw::after { width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; border: 2px solid var(--color-primary, #2DA89E); animation: dd-ripple 1.7s ease-out var(--pd) infinite; } html[data-season="autumn"] .dd-paw::after { width: 15px; height: 15px; margin: -7px 0 0 -7px; border-radius: 0 100% 0 100%; background: var(--color-coral, #E89A7B); translate: -40px 5px; animation: dd-leaf-drop 1.7s ease-in var(--pd) infinite; } html[data-season="winter"] .dd-paw::after { width: 72px; height: 72px; margin: -36px 0 0 -36px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .85) 0, rgba(255, 255, 255, 0) 68%); animation: dd-puff 1.7s ease-out var(--pd) infinite; } .dd-brand { margin: 0; font-family: var(--font-heading, 'Cormorant Garamond', Georgia, serif); font-size: clamp(44px, 12vw, 72px); font-weight: 600; line-height: 1; letter-spacing: .01em; } .dd-brand span { display: inline-block; opacity: 0; transform: translateY(.45em); animation: dd-letter .6s cubic-bezier(.2, .8, .2, 1) calc(.2s + var(--i) * .05s) forwards; } .dd-line { margin: 0; font-family: var(--font-body, Inter, -apple-system, sans-serif); font-size: 14px; letter-spacing: .03em; opacity: 0; animation: dd-fade .5s ease-out .75s forwards; } .dd-line span { display: none; } html[data-season="spring"] .dd-line span[data-s="spring"], html[data-season="summer"] .dd-line span[data-s="summer"], html[data-season="autumn"] .dd-line span[data-s="autumn"], html[data-season="winter"] .dd-line span[data-s="winter"] { display: inline; } .dd-bar { width: 140px; height: 3px; margin-top: 4px; overflow: hidden; border-radius: 3px; background: rgba(15, 79, 74, .14); } html[data-season="winter"] .dd-bar { background: rgba(250, 247, 242, .2); } .dd-bar::after { content: ""; display: block; height: 100%; border-radius: 3px; background: var(--dd-paw); transform: scaleX(0); transform-origin: left center; animation: dd-bar 1.5s cubic-bezier(.3, .6, .3, 1) .1s forwards; } .dd-sky, .dd-ambient { position: absolute; inset: 0; overflow: hidden; pointer-events: none; } .dd-sky { --k: 2; } .dd-p { position: absolute; left: var(--x); top: 0; width: calc(var(--s) * var(--k, 1)); height: calc(var(--s) * var(--k, 1)); opacity: 0; animation: dd-fall var(--t) linear var(--d) infinite; } .dd-p::before { content: ""; display: block; width: 100%; height: 100%; background: var(--dd-c1); animation: dd-sway calc(var(--t) / 3) ease-in-out var(--d) infinite alternate; } .dd-p:nth-child(3n + 2)::before { background: var(--dd-c2); } .dd-p:nth-child(3n)::before { background: var(--dd-c3); } html[data-season="spring"] .dd-p::before { border-radius: 70% 0 70% 0; } html[data-season="autumn"] .dd-p::before { border-radius: 0 100% 0 100%; } html[data-season="autumn"] .dd-p { width: calc(var(--s) * 1.25 * var(--k, 1)); height: calc(var(--s) * 1.25 * var(--k, 1)); } html[data-season="winter"] .dd-p { width: calc(var(--s) * .5 * var(--k, 1)); height: calc(var(--s) * .5 * var(--k, 1)); } html[data-season="winter"] .dd-p::before { border-radius: 50%; background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, .7); } html[data-season="winter"] .dd-p:nth-child(3n + 2)::before { background: var(--color-pastel, #B8E0DA); } html[data-season="summer"] .dd-p { animation-name: dd-rise; } html[data-season="summer"] .dd-p::before { border-radius: 50%; background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, 0) 38%), rgba(255, 255, 255, .22); border: 1.5px solid var(--color-primary, #2DA89E); } html[data-season="summer"] .dd-p:nth-child(3n + 2)::before { border-color: var(--color-coral, #E89A7B); background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, 0) 38%), rgba(255, 255, 255, .22); } html[data-season="summer"] .dd-p:nth-child(3n)::before { border-color: var(--color-pastel, #B8E0DA); background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .95) 0, rgba(255, 255, 255, 0) 38%), rgba(255, 255, 255, .22); } @keyframes dd-step { 0% { opacity: 0; transform: rotate(var(--pr)) scale(.4); } 12% { opacity: 1; transform: rotate(var(--pr)) scale(1.1); } 20% { transform: rotate(var(--pr)) scale(1); } 62% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--pr)) scale(1); } } @keyframes dd-bloom { 0%, 14% { opacity: 0; transform: scale(0); } 32% { opacity: 1; transform: scale(1.25); } 46% { transform: scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } } @keyframes dd-ripple { 0%, 10% { opacity: 0; transform: scale(.4); } 24% { opacity: .7; } 100% { opacity: 0; transform: scale(2.1); } } @keyframes dd-leaf-drop { 0%, 14% { opacity: 0; transform: translateY(-10px) rotate(0deg); } 32% { opacity: 1; } 100% { opacity: 0; transform: translateY(26px) rotate(150deg); } } @keyframes dd-puff { 0%, 10% { opacity: 0; transform: scale(.3); } 26% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5) translateY(-6px); } } @keyframes dd-letter { to { opacity: 1; transform: none; } } @keyframes dd-fade { to { opacity: .85; } } @keyframes dd-bar { to { transform: scaleX(1); } } @keyframes dd-fall { 0% { opacity: 0; transform: translate3d(0, -8vh, 0); } 10% { opacity: var(--o, .9); } 90% { opacity: var(--o, .9); } 100% { opacity: 0; transform: translate3d(var(--dx, 0), 108vh, 0); } } @keyframes dd-rise { 0% { opacity: 0; transform: translate3d(0, 108vh, 0); } 10% { opacity: var(--o, .9); } 90% { opacity: var(--o, .9); } 100% { opacity: 0; transform: translate3d(var(--dx, 0), -10vh, 0); } } @keyframes dd-sway { from { transform: translateX(-14px) rotate(-28deg); } to { transform: translateX(14px) rotate(28deg); } } @keyframes dd-fade { from { opacity: 1; } to { opacity: 0; visibility: hidden; } } @keyframes dd-scene-out { to { opacity: 0; } } @keyframes dd-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }</style>
+<style id="dd-loader-css">:root { --dd-bg: var(--color-cream, #FAF7F2); --dd-fg: var(--color-dark, #0F4F4A); --dd-paw: var(--color-primary, #2DA89E); --dd-glow: radial-gradient(60% 50% at 18% 12%, rgba(184, 224, 218, .55), transparent 70%), radial-gradient(50% 45% at 88% 92%, rgba(232, 154, 123, .22), transparent 70%); } html[data-season="summer"] { --dd-bg: #E4EFE9; --dd-glow: radial-gradient(34% 30% at 86% 10%, rgba(232, 154, 123, .55), rgba(232, 154, 123, 0) 70%), radial-gradient(60% 40% at 12% 100%, rgba(45, 168, 158, .22), transparent 70%); } html[data-season="autumn"] { --dd-glow: radial-gradient(70% 45% at 50% 108%, rgba(232, 154, 123, .38), transparent 70%), radial-gradient(45% 40% at 10% 6%, rgba(184, 224, 218, .35), transparent 70%); } html[data-season="winter"] { --dd-bg: var(--color-dark, #0F4F4A); --dd-fg: var(--color-cream, #FAF7F2); --dd-paw: var(--color-pastel, #B8E0DA); --dd-glow: radial-gradient(55% 45% at 50% 42%, rgba(45, 168, 158, .38), transparent 72%), radial-gradient(40% 30% at 85% 8%, rgba(184, 224, 218, .20), transparent 70%); } .dd-loader { display: none; } html.dd-loading .dd-loader { display: grid; place-items: center; position: fixed; inset: 0; z-index: 2147483000; overflow: hidden; background: var(--dd-glow), var(--dd-bg); color: var(--dd-fg); animation: dd-failsafe 0s linear 4.6s forwards; } html.dd-leaving .dd-loader { pointer-events: none; animation: dd-loader-out 1.1s cubic-bezier(.4, 0, .2, 1) forwards; } html.dd-leaving .dd-loader__scene { animation: dd-scene-out .8s ease-in-out forwards; } .dd-loader__scene { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 24px; text-align: center; } .dd-trail { position: relative; width: min(400px, 84vw); height: 120px; } .dd-paw { position: absolute; left: var(--px); top: var(--py); width: 54px; height: 54px; margin: -27px 0 0 -27px; opacity: 0; transform: rotate(var(--pr)) scale(.4); animation: dd-step 1.7s ease-out var(--pd) infinite; } .dd-paw svg { display: block; width: 100%; height: 100%; fill: var(--dd-paw); } .dd-paw::after { content: ""; position: absolute; left: 50%; top: 50%; pointer-events: none; opacity: 0; } html[data-season="spring"] .dd-paw::after { width: 9px; height: 9px; margin: -4px 0 0 -4px; border-radius: 50%; background: #fff; box-shadow: 0 -9px 0 -1px var(--color-coral, #E89A7B), 0 9px 0 -1px var(--color-coral, #E89A7B), -9px 0 0 -1px var(--color-coral, #E89A7B), 9px 0 0 -1px var(--color-coral, #E89A7B); translate: -52px 0; animation: dd-bloom 1.7s ease-out var(--pd) infinite; } html[data-season="summer"] .dd-paw::after { width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; border: 2px solid var(--color-primary, #2DA89E); animation: dd-ripple 1.7s ease-out var(--pd) infinite; } html[data-season="autumn"] .dd-paw::after { width: 15px; height: 15px; margin: -7px 0 0 -7px; border-radius: 0 100% 0 100%; background: var(--color-coral, #E89A7B); translate: -40px 5px; animation: dd-leaf-drop 1.7s ease-in var(--pd) infinite; } html[data-season="winter"] .dd-paw::after { width: 72px; height: 72px; margin: -36px 0 0 -36px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .85) 0, rgba(255, 255, 255, 0) 68%); animation: dd-puff 1.7s ease-out var(--pd) infinite; } .dd-brand { margin: 0; font-family: var(--font-heading, 'Cormorant Garamond', Georgia, serif); font-size: clamp(44px, 12vw, 72px); font-weight: 600; line-height: 1; letter-spacing: .01em; } .dd-brand span { display: inline-block; opacity: 0; transform: translateY(.45em); animation: dd-letter .6s cubic-bezier(.2, .8, .2, 1) calc(.2s + var(--i) * .05s) forwards; } .dd-line { margin: 0; font-family: var(--font-body, Inter, -apple-system, sans-serif); font-size: 14px; letter-spacing: .03em; opacity: 0; animation: dd-fade .5s ease-out .75s forwards; } .dd-line span { display: none; } html[data-season="spring"] .dd-line span[data-s="spring"], html[data-season="summer"] .dd-line span[data-s="summer"], html[data-season="autumn"] .dd-line span[data-s="autumn"], html[data-season="winter"] .dd-line span[data-s="winter"] { display: inline; } .dd-bar { width: 140px; height: 3px; margin-top: 4px; overflow: hidden; border-radius: 3px; background: rgba(15, 79, 74, .14); } html[data-season="winter"] .dd-bar { background: rgba(250, 247, 242, .2); } .dd-bar::after { content: ""; display: block; height: 100%; border-radius: 3px; background: var(--dd-paw); transform: scaleX(0); transform-origin: left center; animation: dd-bar 1.5s cubic-bezier(.3, .6, .3, 1) .1s forwards; } .dd-fx { display: block; width: 100%; height: 100%; pointer-events: none; } .dd-fx--loader { position: absolute; inset: 0; z-index: 1; } .dd-fx--ambient { position: fixed; inset: 0; z-index: -1; } @keyframes dd-step { 0% { opacity: 0; transform: rotate(var(--pr)) scale(.4); } 12% { opacity: 1; transform: rotate(var(--pr)) scale(1.1); } 20% { transform: rotate(var(--pr)) scale(1); } 62% { opacity: 1; } 100% { opacity: 0; transform: rotate(var(--pr)) scale(1); } } @keyframes dd-bloom { 0%, 14% { opacity: 0; transform: scale(0); } 32% { opacity: 1; transform: scale(1.25); } 46% { transform: scale(1); } 78% { opacity: 1; } 100% { opacity: 0; transform: scale(1); } } @keyframes dd-ripple { 0%, 10% { opacity: 0; transform: scale(.4); } 24% { opacity: .7; } 100% { opacity: 0; transform: scale(2.1); } } @keyframes dd-leaf-drop { 0%, 14% { opacity: 0; transform: translateY(-10px) rotate(0deg); } 32% { opacity: 1; } 100% { opacity: 0; transform: translateY(26px) rotate(150deg); } } @keyframes dd-puff { 0%, 10% { opacity: 0; transform: scale(.3); } 26% { opacity: 1; } 100% { opacity: 0; transform: scale(1.5) translateY(-6px); } } @keyframes dd-letter { to { opacity: 1; transform: none; } } @keyframes dd-fade { to { opacity: .85; } } @keyframes dd-bar { to { transform: scaleX(1); } } @keyframes dd-loader-out { from { opacity: 1; } to { opacity: 0; visibility: hidden; } } @keyframes dd-scene-out { to { opacity: 0; } } @keyframes dd-failsafe { to { opacity: 0; visibility: hidden; pointer-events: none; } }</style>
 <script id="dd-season" data-no-optimize="1" data-cfasync="false">
 (function () {
 	var d = document.documentElement, w = window, s = null;
@@ -66,7 +873,7 @@
 img:is([sizes=auto i],[sizes^="auto," i]){contain-intrinsic-size:3000px 1500px}
 
 </style>
-<link data-optimized="2" rel="stylesheet" href="wp-content/litespeed/css/1fff8d59e3eeef032462aab3548fcada.css" />
+<link data-optimized="2" rel="stylesheet" href="wp-content/litespeed/css/41afacafd1e034dd88c2ca131a8f39b1.css" />
 
 
 
@@ -155,6 +962,7 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 
 
 
+
 <style id='moove_gdpr_frontend-inline-css'>
 				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main h3.tab-title, 
 				#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main span.tab-title,
@@ -185,6 +993,8 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 			#moove_gdpr_cookie_modal,#moove_gdpr_cookie_info_bar,.gdpr_cookie_settings_shortcode_content{font-family:inherit}#moove_gdpr_save_popup_settings_button{background-color:#373737;color:#fff}#moove_gdpr_save_popup_settings_button:hover{background-color:#000}#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton,#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton{background-color:#01b3b7}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder a.mgbutton,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder button.mgbutton,.gdpr_cookie_settings_shortcode_content .gdpr-shr-button.button-green{background-color:#01b3b7;border-color:#01b3b7}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder a.mgbutton:hover,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder button.mgbutton:hover,.gdpr_cookie_settings_shortcode_content .gdpr-shr-button.button-green:hover{background-color:#fff;color:#01b3b7}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close span.gdpr-icon{background-color:#01b3b7;border:1px solid #01b3b7}#moove_gdpr_cookie_info_bar span.moove-gdpr-infobar-allow-all.focus-g,#moove_gdpr_cookie_info_bar span.moove-gdpr-infobar-allow-all:focus,#moove_gdpr_cookie_info_bar button.moove-gdpr-infobar-allow-all.focus-g,#moove_gdpr_cookie_info_bar button.moove-gdpr-infobar-allow-all:focus,#moove_gdpr_cookie_info_bar span.moove-gdpr-infobar-reject-btn.focus-g,#moove_gdpr_cookie_info_bar span.moove-gdpr-infobar-reject-btn:focus,#moove_gdpr_cookie_info_bar button.moove-gdpr-infobar-reject-btn.focus-g,#moove_gdpr_cookie_info_bar button.moove-gdpr-infobar-reject-btn:focus,#moove_gdpr_cookie_info_bar span.change-settings-button.focus-g,#moove_gdpr_cookie_info_bar span.change-settings-button:focus,#moove_gdpr_cookie_info_bar button.change-settings-button.focus-g,#moove_gdpr_cookie_info_bar button.change-settings-button:focus{-webkit-box-shadow:0 0 1px 3px #01b3b7;-moz-box-shadow:0 0 1px 3px #01b3b7;box-shadow:0 0 1px 3px #01b3b7}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close i:hover,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close span.gdpr-icon:hover,#moove_gdpr_cookie_info_bar span[data-href]>u.change-settings-button{color:#01b3b7}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li.menu-item-selected a span.gdpr-icon,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li.menu-item-selected button span.gdpr-icon{color:inherit}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li a span.gdpr-icon,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li button span.gdpr-icon{color:inherit}#moove_gdpr_cookie_modal .gdpr-acc-link{line-height:0;font-size:0;color:transparent;position:absolute}#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-close:hover i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li a,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li button,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li button i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-left-content #moove-gdpr-menu li a i,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .moove-gdpr-tab-main-content a:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content span.change-settings-button:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.change-settings-button:hover,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content u.change-settings-button:hover,#moove_gdpr_cookie_info_bar span[data-href]>u.change-settings-button,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content span.change-settings-button.focus-g,span.change-settings-button:focus,button.change-settings-button.focus-g,button.change-settings-button:focus,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content u.change-settings-button.focus-g,#moove_gdpr_cookie_info_bar.moove-gdpr-dark-scheme .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content u.change-settings-button:focus{color:#01b3b7}#moove_gdpr_cookie_modal .moove-gdpr-branding.focus-g span,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main a.focus-g,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-tab-main .gdpr-cd-details-toggle.focus-g{color:#01b3b7}#moove_gdpr_cookie_modal.gdpr_lightbox-hide{display:none}#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content a.mgbutton,#moove_gdpr_cookie_info_bar .moove-gdpr-info-bar-container .moove-gdpr-info-bar-content button.mgbutton,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder a.mgbutton,#moove_gdpr_cookie_modal .moove-gdpr-modal-content .moove-gdpr-modal-footer-content .moove-gdpr-button-holder button.mgbutton,.gdpr-shr-button,#moove_gdpr_cookie_info_bar .moove-gdpr-infobar-close-btn{border-radius:0}
 
 </style>
+
+
 
 
 
@@ -263,7 +1073,7 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 
 <div id="dd-loader" class="dd-loader" role="status" aria-live="polite">
 	<span class="screen-reader-text">Betöltés…</span>
-	<div class="dd-sky" aria-hidden="true"><i class="dd-p" style="--x:27%;--s:18px;--t:4.8s;--d:-0.8s;--dx:-6vw"></i><i class="dd-p" style="--x:43.8%;--s:12px;--t:4.4s;--d:-2s;--dx:-6vw"></i><i class="dd-p" style="--x:54.3%;--s:12px;--t:3.9s;--d:-0.1s;--dx:5vw"></i><i class="dd-p" style="--x:71.8%;--s:18px;--t:4.7s;--d:-0.5s;--dx:5vw"></i><i class="dd-p" style="--x:18.9%;--s:14px;--t:3.9s;--d:-1s;--dx:5vw"></i><i class="dd-p" style="--x:25.7%;--s:14px;--t:4.5s;--d:-4.4s;--dx:-3vw"></i><i class="dd-p" style="--x:49.6%;--s:14px;--t:6.1s;--d:-2.6s;--dx:-7vw"></i><i class="dd-p" style="--x:47.7%;--s:14px;--t:4s;--d:-0s;--dx:-3vw"></i><i class="dd-p" style="--x:52.1%;--s:13px;--t:6.2s;--d:-3.1s;--dx:-8vw"></i><i class="dd-p" style="--x:3.9%;--s:15px;--t:4.4s;--d:-2.5s;--dx:-6vw"></i><i class="dd-p" style="--x:58.9%;--s:9px;--t:5.7s;--d:-1.5s;--dx:0vw"></i><i class="dd-p" style="--x:60.7%;--s:10px;--t:5.4s;--d:-2s;--dx:7vw"></i><i class="dd-p" style="--x:40.5%;--s:17px;--t:4s;--d:-3.9s;--dx:0vw"></i><i class="dd-p" style="--x:83.5%;--s:11px;--t:3.8s;--d:-2.2s;--dx:-3vw"></i><i class="dd-p" style="--x:34.7%;--s:12px;--t:4.2s;--d:-2.7s;--dx:3vw"></i><i class="dd-p" style="--x:57.4%;--s:8px;--t:5s;--d:-3.8s;--dx:1vw"></i><i class="dd-p" style="--x:75.2%;--s:13px;--t:4.8s;--d:-2.6s;--dx:-1vw"></i><i class="dd-p" style="--x:3.2%;--s:18px;--t:6s;--d:-2s;--dx:-7vw"></i><i class="dd-p" style="--x:29.8%;--s:14px;--t:6.3s;--d:-5.6s;--dx:-6vw"></i><i class="dd-p" style="--x:14.9%;--s:14px;--t:6s;--d:-4.9s;--dx:-7vw"></i><i class="dd-p" style="--x:16.2%;--s:13px;--t:4.7s;--d:-2s;--dx:-2vw"></i><i class="dd-p" style="--x:93.8%;--s:9px;--t:4.2s;--d:-4s;--dx:-4vw"></i><i class="dd-p" style="--x:62.3%;--s:9px;--t:5.9s;--d:-2.5s;--dx:-2vw"></i><i class="dd-p" style="--x:91.6%;--s:14px;--t:5.9s;--d:-4.7s;--dx:-4vw"></i><i class="dd-p" style="--x:23.9%;--s:9px;--t:3.9s;--d:-1.7s;--dx:-5vw"></i><i class="dd-p" style="--x:75.5%;--s:13px;--t:6.4s;--d:-0.2s;--dx:-3vw"></i><i class="dd-p" style="--x:16.9%;--s:17px;--t:3.8s;--d:-2.3s;--dx:-5vw"></i><i class="dd-p" style="--x:89.5%;--s:13px;--t:5.8s;--d:-2.6s;--dx:7vw"></i><i class="dd-p" style="--x:19.1%;--s:11px;--t:4.7s;--d:-2.1s;--dx:8vw"></i><i class="dd-p" style="--x:35%;--s:19px;--t:5.7s;--d:-4.3s;--dx:2vw"></i></div>
+	<canvas class="dd-fx dd-fx--loader" aria-hidden="true"></canvas>
 	<div class="dd-loader__scene" aria-hidden="true">
 		<div class="dd-trail"><span class="dd-paw" style="--px:8%;--py:70%;--pr:82deg;--pd:0s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span><span class="dd-paw" style="--px:33%;--py:26%;--pr:92deg;--pd:.22s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span><span class="dd-paw" style="--px:58%;--py:70%;--pr:80deg;--pd:.44s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span><span class="dd-paw" style="--px:84%;--py:26%;--pr:90deg;--pd:.66s"><svg viewBox="0 0 64 64" aria-hidden="true" focusable="false"><use href="#dd-paw-shape"/></svg></span></div>
 		<p class="dd-brand"><span style="--i:0">D</span><span style="--i:1">e</span><span style="--i:2">b</span><span style="--i:3">b</span><span style="--i:4">i</span><span style="--i:5">e</span><span style="--i:6">D</span><span style="--i:7">o</span><span style="--i:8">g</span></p>
@@ -1005,6 +1815,128 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 
 
 
+<section id="dd-vitrin" class="dd-vit alignfull" aria-labelledby="dd-vit-title">
+	<div class="dd-vit__inner">
+		<header class="dd-vit__head">
+			<div class="dd-vit__titles">
+				<p class="dd-vit__eyebrow">Válogatás</p>
+				<h2 id="dd-vit-title" class="dd-vit__title">Böngéssz a vitrinünkben</h2>
+				<p class="dd-vit__sub">Húzd oldalra, vagy használd a nyilakat. A kategóriákkal szűrhetsz is.</p>
+			</div>
+			<div class="dd-vit__ctrl" hidden>
+				<button type="button" class="dd-vit__nav" data-dir="-1" aria-label="Előző termékek"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></svg></button>
+				<button type="button" class="dd-vit__nav" data-dir="1" aria-label="Következő termékek"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg></button>
+			</div>
+		</header>
+				<div class="dd-vit__chips" role="group" aria-label="Szűrés kategória szerint" hidden><button type="button" class="dd-vit__chip" data-cat="" aria-pressed="true">Mind</button><button type="button" class="dd-vit__chip" data-cat="csomag" aria-pressed="false">Csomag</button><button type="button" class="dd-vit__chip" data-cat="immunerosito" aria-pressed="false">Immunerősítő</button><button type="button" class="dd-vit__chip" data-cat="cica" aria-pressed="false">Cica</button><button type="button" class="dd-vit__chip" data-cat="taplalekkiegeszito" aria-pressed="false">Táplálékkiegészítő</button><button type="button" class="dd-vit__chip" data-cat="kiegeszitok" aria-pressed="false">Kiegészítők</button><button type="button" class="dd-vit__chip" data-cat="kutyasampon" aria-pressed="false">Kutyasampon</button><button type="button" class="dd-vit__chip" data-cat="jutalomfalat" aria-pressed="false">Jutalomfalat</button></div>
+			</div>
+	<div class="dd-vit__rail" tabindex="0" role="region" aria-label="Termékek, vízszintesen görgethető sor">
+		<ul class="dd-vit__track"><li class="dd-vit__tile" data-cat="csomag"><a class="dd-vit__link" href="termek/szabadteri-apolo-csomag/index.html" aria-label="Megnézem: Szabadtéri Ápoló Csomag"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-300x300.png.webp 300w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-100x100.png.webp 100w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-600x600.png.webp 600w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-64x64.png.webp 64w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-1024x1024.png.webp 1024w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-150x150.png.webp 150w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-768x768.png.webp 768w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-50x50.png.webp 50w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1.png.webp 1254w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-300x300.png" alt="Szabadtéri Ápoló Csomag" loading="lazy" srcset="wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-300x300.png 300w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-100x100.png 100w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-600x600.png 600w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-64x64.png 64w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-1024x1024.png 1024w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-150x150.png 150w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-768x768.png 768w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1-50x50.png 50w, wp-content/uploads/2026/05/ChatGPT-Image-2026.-maj.-13.-20_36_22-1.png 1254w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Csomag</span><span class="dd-vit__name">Szabadtéri Ápoló Csomag</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">19 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10982" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="10982" data-product_sku="00096-97" aria-label="Kosárba: &ldquo;Szabadtéri Ápoló Csomag&rdquo;" rel="nofollow" data-success_message="&ldquo;Szabadtéri Ápoló Csomag&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10982" class="screen-reader-text">
+			</span>
+</div></li><li class="dd-vit__tile" data-cat="immunerosito"><a class="dd-vit__link" href="termek/nordcanin-allerginix-pro/index.html" aria-label="Megnézem: Nordcanin Allerginix Pro+"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/11/AllerginixPRO_133546-300x300.jpeg.webp 300w, wp-content/uploads/2025/11/AllerginixPRO_133546-100x100.jpeg.webp 100w, wp-content/uploads/2025/11/AllerginixPRO_133546-600x600.jpeg.webp 600w, wp-content/uploads/2025/11/AllerginixPRO_133546-64x64.jpeg.webp 64w, wp-content/uploads/2025/11/AllerginixPRO_133546-1024x1024.jpeg.webp 1024w, wp-content/uploads/2025/11/AllerginixPRO_133546-150x150.jpeg.webp 150w, wp-content/uploads/2025/11/AllerginixPRO_133546-768x768.jpeg.webp 768w, wp-content/uploads/2025/11/AllerginixPRO_133546-50x50.jpeg.webp 50w, wp-content/uploads/2025/11/AllerginixPRO_133546.jpeg.webp 1280w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/11/AllerginixPRO_133546-300x300.jpeg" alt="Nordcanin Allerginix Pro+" loading="lazy" srcset="wp-content/uploads/2025/11/AllerginixPRO_133546-300x300.jpeg 300w, wp-content/uploads/2025/11/AllerginixPRO_133546-100x100.jpeg 100w, wp-content/uploads/2025/11/AllerginixPRO_133546-600x600.jpeg 600w, wp-content/uploads/2025/11/AllerginixPRO_133546-64x64.jpeg 64w, wp-content/uploads/2025/11/AllerginixPRO_133546-1024x1024.jpeg 1024w, wp-content/uploads/2025/11/AllerginixPRO_133546-150x150.jpeg 150w, wp-content/uploads/2025/11/AllerginixPRO_133546-768x768.jpeg 768w, wp-content/uploads/2025/11/AllerginixPRO_133546-50x50.jpeg 50w, wp-content/uploads/2025/11/AllerginixPRO_133546.jpeg 1280w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Immunerősítő</span><span class="dd-vit__name">Nordcanin Allerginix Pro+</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">9 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">16 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 9 490&nbsp;&#070;&#116; - 16 990&nbsp;&#070;&#116;</span></span><a href="termek/nordcanin-allerginix-pro/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10585" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="10585" data-product_sku="" aria-label="Válasszunk &ldquo;Nordcanin Allerginix Pro+&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10585" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="immunerosito"><a class="dd-vit__link" href="termek/nordcanin-fiberboost-pumpkin-spice-prebiotikus-rost/index.html" aria-label="Megnézem: Nordcanin Fiberboost PUMPKIN SPICE – prebiotikus rost"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/10/limitalt-kiadas-300x300.jpg.webp 300w, wp-content/uploads/2025/10/limitalt-kiadas-100x100.jpg.webp 100w, wp-content/uploads/2025/10/limitalt-kiadas-600x600.jpg.webp 600w, wp-content/uploads/2025/10/limitalt-kiadas-64x64.jpg.webp 64w, wp-content/uploads/2025/10/limitalt-kiadas-1024x1024.jpg.webp 1024w, wp-content/uploads/2025/10/limitalt-kiadas-150x150.jpg.webp 150w, wp-content/uploads/2025/10/limitalt-kiadas-768x768.jpg.webp 768w, wp-content/uploads/2025/10/limitalt-kiadas-50x50.jpg.webp 50w, wp-content/uploads/2025/10/limitalt-kiadas.jpg.webp 1080w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/10/limitalt-kiadas-300x300.jpg" alt="Nordcanin Fiberboost PUMPKIN SPICE – prebiotikus rost" loading="lazy" srcset="wp-content/uploads/2025/10/limitalt-kiadas-300x300.jpg 300w, wp-content/uploads/2025/10/limitalt-kiadas-100x100.jpg 100w, wp-content/uploads/2025/10/limitalt-kiadas-600x600.jpg 600w, wp-content/uploads/2025/10/limitalt-kiadas-64x64.jpg 64w, wp-content/uploads/2025/10/limitalt-kiadas-1024x1024.jpg 1024w, wp-content/uploads/2025/10/limitalt-kiadas-150x150.jpg 150w, wp-content/uploads/2025/10/limitalt-kiadas-768x768.jpg 768w, wp-content/uploads/2025/10/limitalt-kiadas-50x50.jpg 50w, wp-content/uploads/2025/10/limitalt-kiadas.jpg 1080w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Immunerősítő</span><span class="dd-vit__name">Nordcanin Fiberboost PUMPKIN SPICE – prebiotikus rost</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">6 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">10 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 6 490&nbsp;&#070;&#116; - 10 990&nbsp;&#070;&#116;</span></span><a href="termek/nordcanin-fiberboost-pumpkin-spice-prebiotikus-rost/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10532" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="10532" data-product_sku="" aria-label="Válasszunk &ldquo;Nordcanin Fiberboost PUMPKIN SPICE – prebiotikus rost&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10532" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="cica"><a class="dd-vit__link" href="termek/nordcanin-soreleszto-kutyaknak-macskaknak/index.html" aria-label="Megnézem: Nordcanin Sörélesztő"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg.webp 300w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-100x100.jpg.webp 100w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-600x600.jpg.webp 600w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-64x64.jpg.webp 64w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-150x150.jpg.webp 150w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-768x768.jpg.webp 768w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-50x50.jpg.webp 50w, wp-content/uploads/2025/02/Nordcanin_Soreleszto.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg" alt="Nordcanin Sörélesztő" loading="lazy" srcset="wp-content/uploads/2025/02/Nordcanin_Soreleszto-300x300.jpg 300w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-100x100.jpg 100w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-600x600.jpg 600w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-64x64.jpg 64w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-150x150.jpg 150w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-768x768.jpg 768w, wp-content/uploads/2025/02/Nordcanin_Soreleszto-50x50.jpg 50w, wp-content/uploads/2025/02/Nordcanin_Soreleszto.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Cica</span><span class="dd-vit__name">Nordcanin Sörélesztő</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">5 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10166" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="10166" data-product_sku="" aria-label="Kosárba: &ldquo;Nordcanin Sörélesztő&rdquo;" rel="nofollow" data-success_message="&ldquo;Nordcanin Sörélesztő&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10166" class="screen-reader-text">
+			</span>
+</div></li><li class="dd-vit__tile" data-cat="taplalekkiegeszito"><a class="dd-vit__link" href="termek/nordcanin-multivitamin-kutyaknak/index.html" aria-label="Megnézem: Nordcanin Multivitamin"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/02/Nordcanin_Multivitamin-300x300.jpg.webp 300w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-100x100.jpg.webp 100w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-600x600.jpg.webp 600w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-64x64.jpg.webp 64w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-150x150.jpg.webp 150w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-768x768.jpg.webp 768w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-50x50.jpg.webp 50w, wp-content/uploads/2025/02/Nordcanin_Multivitamin.jpg.webp 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/02/Nordcanin_Multivitamin-300x300.jpg" alt="Nordcanin Multivitamin" loading="lazy" srcset="wp-content/uploads/2025/02/Nordcanin_Multivitamin-300x300.jpg 300w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-100x100.jpg 100w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-600x600.jpg 600w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-64x64.jpg 64w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-150x150.jpg 150w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-768x768.jpg 768w, wp-content/uploads/2025/02/Nordcanin_Multivitamin-50x50.jpg 50w, wp-content/uploads/2025/02/Nordcanin_Multivitamin.jpg 800w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Táplálékkiegészítő</span><span class="dd-vit__name">Nordcanin Multivitamin</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">5 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">8 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 5 990&nbsp;&#070;&#116; - 8 990&nbsp;&#070;&#116;</span></span><a href="termek/nordcanin-multivitamin-kutyaknak/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10149" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="10149" data-product_sku="" aria-label="Válasszunk &ldquo;Nordcanin Multivitamin&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10149" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="immunerosito"><a class="dd-vit__link" href="termek/nordcanin-allerginix/index.html" aria-label="Megnézem: Nordcanin Allerginix"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/01/Allerginix-termekkep-300x300.jpg.webp 300w, wp-content/uploads/2025/01/Allerginix-termekkep-100x100.jpg.webp 100w, wp-content/uploads/2025/01/Allerginix-termekkep-600x600.jpg.webp 600w, wp-content/uploads/2025/01/Allerginix-termekkep-64x64.jpg.webp 64w, wp-content/uploads/2025/01/Allerginix-termekkep-1024x1024.jpg.webp 1024w, wp-content/uploads/2025/01/Allerginix-termekkep-150x150.jpg.webp 150w, wp-content/uploads/2025/01/Allerginix-termekkep-768x768.jpg.webp 768w, wp-content/uploads/2025/01/Allerginix-termekkep-50x50.jpg.webp 50w, wp-content/uploads/2025/01/Allerginix-termekkep.jpg.webp 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/01/Allerginix-termekkep-300x300.jpg" alt="Nordcanin Allerginix" loading="lazy" srcset="wp-content/uploads/2025/01/Allerginix-termekkep-300x300.jpg 300w, wp-content/uploads/2025/01/Allerginix-termekkep-100x100.jpg 100w, wp-content/uploads/2025/01/Allerginix-termekkep-600x600.jpg 600w, wp-content/uploads/2025/01/Allerginix-termekkep-64x64.jpg 64w, wp-content/uploads/2025/01/Allerginix-termekkep-1024x1024.jpg 1024w, wp-content/uploads/2025/01/Allerginix-termekkep-150x150.jpg 150w, wp-content/uploads/2025/01/Allerginix-termekkep-768x768.jpg 768w, wp-content/uploads/2025/01/Allerginix-termekkep-50x50.jpg 50w, wp-content/uploads/2025/01/Allerginix-termekkep.jpg 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Immunerősítő</span><span class="dd-vit__name">Nordcanin Allerginix</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">7 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">13 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 7 490&nbsp;&#070;&#116; - 13 990&nbsp;&#070;&#116;</span></span><a href="termek/nordcanin-allerginix/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10061" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="10061" data-product_sku="" aria-label="Válasszunk &ldquo;Nordcanin Allerginix&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10061" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="taplalekkiegeszito"><a class="dd-vit__link" href="termek/nordcanin-vitarior-izuletvedo-folyadek/index.html" aria-label="Megnézem: Nordcanin Vitarior Izületvédő Folyadék"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/01/02-300x300.jpg.webp 300w, wp-content/uploads/2025/01/02-100x100.jpg.webp 100w, wp-content/uploads/2025/01/02-600x600.jpg.webp 600w, wp-content/uploads/2025/01/02-64x64.jpg.webp 64w, wp-content/uploads/2025/01/02-1024x1024.jpg.webp 1024w, wp-content/uploads/2025/01/02-150x150.jpg.webp 150w, wp-content/uploads/2025/01/02-768x768.jpg.webp 768w, wp-content/uploads/2025/01/02-50x50.jpg.webp 50w, wp-content/uploads/2025/01/02.jpg.webp 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/01/02-300x300.jpg" alt="Nordcanin Vitarior Izületvédő Folyadék" loading="lazy" srcset="wp-content/uploads/2025/01/02-300x300.jpg 300w, wp-content/uploads/2025/01/02-100x100.jpg 100w, wp-content/uploads/2025/01/02-600x600.jpg 600w, wp-content/uploads/2025/01/02-64x64.jpg 64w, wp-content/uploads/2025/01/02-1024x1024.jpg 1024w, wp-content/uploads/2025/01/02-150x150.jpg 150w, wp-content/uploads/2025/01/02-768x768.jpg 768w, wp-content/uploads/2025/01/02-50x50.jpg 50w, wp-content/uploads/2025/01/02.jpg 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Táplálékkiegészítő</span><span class="dd-vit__name">Nordcanin Vitarior Izületvédő Folyadék</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">11 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">14 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 11 990&nbsp;&#070;&#116; - 14 990&nbsp;&#070;&#116;</span></span><a href="termek/nordcanin-vitarior-izuletvedo-folyadek/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10055" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="10055" data-product_sku="" aria-label="Válasszunk &ldquo;Nordcanin Vitarior Izületvédő Folyadék&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10055" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="kiegeszitok"><a class="dd-vit__link" href="termek/mini-fekete-mikroszalas-kisallat-torolkozo/index.html" aria-label="Megnézem: Mini Fekete Mikroszálas Kisállat Törölköző"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-300x300.jpg.webp 300w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-100x100.jpg.webp 100w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-600x600.jpg.webp 600w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-64x64.jpg.webp 64w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-150x150.jpg.webp 150w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-768x768.jpg.webp 768w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-50x50.jpg.webp 50w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-300x300.jpg" alt="Mini Fekete Mikroszálas Kisállat Törölköző" loading="lazy" srcset="wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-300x300.jpg 300w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-100x100.jpg 100w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-600x600.jpg 600w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-64x64.jpg 64w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-150x150.jpg 150w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-768x768.jpg 768w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min-50x50.jpg 50w, wp-content/uploads/2025/01/Microfiber-Mini-Black-Towel-min.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Kiegészítők</span><span class="dd-vit__name">Mini Fekete Mikroszálas Kisállat Törölköző</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10026" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="10026" data-product_sku="" aria-label="Kosárba: &ldquo;Mini Fekete Mikroszálas Kisállat Törölköző&rdquo;" rel="nofollow" data-success_message="&ldquo;Mini Fekete Mikroszálas Kisállat Törölköző&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10026" class="screen-reader-text">
+			</span>
+</div></li><li class="dd-vit__tile" data-cat="kutyasampon"><a class="dd-vit__link" href="termek/ezustkolloidos-kutyasampon-erzekeny-borre/index.html" aria-label="Megnézem: Ezüstkolloidos Kutyasampon Érzékeny Bőrre"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-300x300.jpg.webp 300w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-100x100.jpg.webp 100w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-600x600.jpg.webp 600w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-64x64.jpg.webp 64w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-150x150.jpg.webp 150w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-768x768.jpg.webp 768w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-50x50.jpg.webp 50w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-300x300.jpg" alt="Ezüstkolloidos Kutyasampon Érzékeny Bőrre" loading="lazy" srcset="wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-300x300.jpg 300w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-100x100.jpg 100w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-600x600.jpg 600w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-64x64.jpg 64w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-150x150.jpg 150w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-768x768.jpg 768w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min-50x50.jpg 50w, wp-content/uploads/2025/01/250ML-SENSITIVE-SKIN-FAMILY-SHAMPOO-V2-min.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Kutyasampon</span><span class="dd-vit__name">Ezüstkolloidos Kutyasampon Érzékeny Bőrre</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">5 890&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_10012" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="10012" data-product_sku="00070-1" aria-label="Kosárba: &ldquo;Ezüstkolloidos Kutyasampon Érzékeny Bőrre&rdquo;" rel="nofollow" data-success_message="&ldquo;Ezüstkolloidos Kutyasampon Érzékeny Bőrre&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_10012" class="screen-reader-text">
+			</span>
+</div></li><li class="dd-vit__tile" data-cat="kiegeszitok"><a class="dd-vit__link" href="termek/premium-bambusz-apolo-tisztitoparna/index.html" aria-label="Megnézem: Prémium Bambusz Ápoló Tisztítópárna"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg.webp 300w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-100x100.jpg.webp 100w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-600x600.jpg.webp 600w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-64x64.jpg.webp 64w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1024x1024.jpg.webp 1024w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-150x150.jpg.webp 150w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-768x768.jpg.webp 768w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1536x1536.jpg.webp 1536w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-2048x2048.jpg.webp 2048w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-50x50.jpg.webp 50w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg" alt="Prémium Bambusz Ápoló Tisztítópárna" loading="lazy" srcset="wp-content/uploads/2024/11/Reusable-Organic-Pads-min-300x300.jpg 300w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-100x100.jpg 100w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-600x600.jpg 600w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-64x64.jpg 64w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1024x1024.jpg 1024w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-150x150.jpg 150w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-768x768.jpg 768w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-1536x1536.jpg 1536w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-2048x2048.jpg 2048w, wp-content/uploads/2024/11/Reusable-Organic-Pads-min-50x50.jpg 50w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Kiegészítők</span><span class="dd-vit__name">Prémium Bambusz Ápoló Tisztítópárna</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">3 690&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_9884" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="9884" data-product_sku="" aria-label="Kosárba: &ldquo;Prémium Bambusz Ápoló Tisztítópárna&rdquo;" rel="nofollow" data-success_message="&ldquo;Prémium Bambusz Ápoló Tisztítópárna&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_9884" class="screen-reader-text">
+			</span>
+</div></li><li class="dd-vit__tile" data-cat="jutalomfalat"><a class="dd-vit__link" href="termek/4dogs-churpi-ragosajt/index.html" aria-label="Megnézem: 4DOGS Churpi Rágósajt"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2024/10/churpi06-300x300.jpg.webp 300w, wp-content/uploads/2024/10/churpi06-100x100.jpg.webp 100w, wp-content/uploads/2024/10/churpi06-600x600.jpg.webp 600w, wp-content/uploads/2024/10/churpi06-64x64.jpg.webp 64w, wp-content/uploads/2024/10/churpi06-1024x1024.jpg.webp 1024w, wp-content/uploads/2024/10/churpi06-150x150.jpg.webp 150w, wp-content/uploads/2024/10/churpi06-768x768.jpg.webp 768w, wp-content/uploads/2024/10/churpi06-50x50.jpg.webp 50w, wp-content/uploads/2024/10/churpi06.jpg.webp 1500w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2024/10/churpi06-300x300.jpg" alt="4DOGS Churpi Rágósajt" loading="lazy" srcset="wp-content/uploads/2024/10/churpi06-300x300.jpg 300w, wp-content/uploads/2024/10/churpi06-100x100.jpg 100w, wp-content/uploads/2024/10/churpi06-600x600.jpg 600w, wp-content/uploads/2024/10/churpi06-64x64.jpg 64w, wp-content/uploads/2024/10/churpi06-1024x1024.jpg 1024w, wp-content/uploads/2024/10/churpi06-150x150.jpg 150w, wp-content/uploads/2024/10/churpi06-768x768.jpg 768w, wp-content/uploads/2024/10/churpi06-50x50.jpg 50w, wp-content/uploads/2024/10/churpi06.jpg 1500w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Jutalomfalat</span><span class="dd-vit__name">4DOGS Churpi Rágósajt</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">2 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">2 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 2 490&nbsp;&#070;&#116; - 2 990&nbsp;&#070;&#116;</span></span><a href="termek/4dogs-churpi-ragosajt/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_9563" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="9563" data-product_sku="" aria-label="Válasszunk &ldquo;4DOGS Churpi Rágósajt&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_9563" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="jutalomfalat"><a class="dd-vit__link" href="termek/4dogs-izuletvedo-jutalomfalat/index.html" aria-label="Megnézem: 4DOGS Izületvédő Jutalomfalat"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-300x300.jpg.webp 300w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-100x100.jpg.webp 100w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-600x600.jpg.webp 600w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-64x64.jpg.webp 64w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-1024x1024.jpg.webp 1024w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-150x150.jpg.webp 150w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-768x768.jpg.webp 768w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-50x50.jpg.webp 50w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy.jpg.webp 1280w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-300x300.jpg" alt="4DOGS Izületvédő Jutalomfalat" loading="lazy" srcset="wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-300x300.jpg 300w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-100x100.jpg 100w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-600x600.jpg 600w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-64x64.jpg 64w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-1024x1024.jpg 1024w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-150x150.jpg 150w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-768x768.jpg 768w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy-50x50.jpg 50w, wp-content/uploads/2024/10/suti_izulet-uj1-%E2%80%93-nagy.jpg 1280w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Jutalomfalat</span><span class="dd-vit__name">4DOGS Izületvédő Jutalomfalat</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">1 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_9552" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="9552" data-product_sku="" aria-label="Kosárba: &ldquo;4DOGS Izületvédő Jutalomfalat&rdquo;" rel="nofollow" data-success_message="&ldquo;4DOGS Izületvédő Jutalomfalat&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_9552" class="screen-reader-text">
+			</span>
+</div></li><li class="dd-vit__tile" data-cat="jutalomfalat"><a class="dd-vit__link" href="termek/bortaplalo-jutalomfalat-kutyaknak-4dogs/index.html" aria-label="Megnézem: 4DOGS szőr- és bőrtápláló jutalomfalat"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2024/09/4dogs_szor_es_bor_1-300x300.jpg.webp 300w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-100x100.jpg.webp 100w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-600x600.jpg.webp 600w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-64x64.jpg.webp 64w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-1024x1024.jpg.webp 1024w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-150x150.jpg.webp 150w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-768x768.jpg.webp 768w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-50x50.jpg.webp 50w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1.jpg.webp 1280w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2024/09/4dogs_szor_es_bor_1-300x300.jpg" alt="4DOGS szőr- és bőrtápláló jutalomfalat" loading="lazy" srcset="wp-content/uploads/2024/09/4dogs_szor_es_bor_1-300x300.jpg 300w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-100x100.jpg 100w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-600x600.jpg 600w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-64x64.jpg 64w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-1024x1024.jpg 1024w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-150x150.jpg 150w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-768x768.jpg 768w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1-50x50.jpg 50w, wp-content/uploads/2024/09/4dogs_szor_es_bor_1.jpg 1280w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Jutalomfalat</span><span class="dd-vit__name">4DOGS szőr- és bőrtápláló jutalomfalat</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">1 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_9485" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="9485" data-product_sku="" aria-label="Kosárba: &ldquo;4DOGS szőr- és bőrtápláló jutalomfalat&rdquo;" rel="nofollow" data-success_message="&ldquo;4DOGS szőr- és bőrtápláló jutalomfalat&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_9485" class="screen-reader-text">
+			</span>
+</div></li><li class="dd-vit__tile" data-cat="immunerosito"><a class="dd-vit__link" href="termek/nordcanin-premium-hidrolizalt-huminsav/index.html" aria-label="Megnézem: Nordcanin Prémium Hidrolizált Huminsav"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2024/09/termek_03-300x300.jpg.webp 300w, wp-content/uploads/2024/09/termek_03-100x100.jpg.webp 100w, wp-content/uploads/2024/09/termek_03-600x600.jpg.webp 600w, wp-content/uploads/2024/09/termek_03-64x64.jpg.webp 64w, wp-content/uploads/2024/09/termek_03-1024x1024.jpg.webp 1024w, wp-content/uploads/2024/09/termek_03-150x150.jpg.webp 150w, wp-content/uploads/2024/09/termek_03-768x768.jpg.webp 768w, wp-content/uploads/2024/09/termek_03-50x50.jpg.webp 50w, wp-content/uploads/2024/09/termek_03.jpg.webp 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2024/09/termek_03-300x300.jpg" alt="Nordcanin Prémium Hidrolizált Huminsav" loading="lazy" srcset="wp-content/uploads/2024/09/termek_03-300x300.jpg 300w, wp-content/uploads/2024/09/termek_03-100x100.jpg 100w, wp-content/uploads/2024/09/termek_03-600x600.jpg 600w, wp-content/uploads/2024/09/termek_03-64x64.jpg 64w, wp-content/uploads/2024/09/termek_03-1024x1024.jpg 1024w, wp-content/uploads/2024/09/termek_03-150x150.jpg 150w, wp-content/uploads/2024/09/termek_03-768x768.jpg 768w, wp-content/uploads/2024/09/termek_03-50x50.jpg 50w, wp-content/uploads/2024/09/termek_03.jpg 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Immunerősítő</span><span class="dd-vit__name">Nordcanin Prémium Hidrolizált Huminsav</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">5 690&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">9 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 5 690&nbsp;&#070;&#116; - 9 990&nbsp;&#070;&#116;</span></span><a href="termek/nordcanin-premium-hidrolizalt-huminsav/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_9475" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="9475" data-product_sku="" aria-label="Válasszunk &ldquo;Nordcanin Prémium Hidrolizált Huminsav&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_9475" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="immunerosito"><a class="dd-vit__link" href="termek/nordcanin-fiberboost-prebiotikus-rost/index.html" aria-label="Megnézem: Nordcanin Fiberboost – prebiotikus rost"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2024/09/fiberboost_12-300x300.jpg.webp 300w, wp-content/uploads/2024/09/fiberboost_12-100x100.jpg.webp 100w, wp-content/uploads/2024/09/fiberboost_12-600x600.jpg.webp 600w, wp-content/uploads/2024/09/fiberboost_12-64x64.jpg.webp 64w, wp-content/uploads/2024/09/fiberboost_12-1024x1024.jpg.webp 1024w, wp-content/uploads/2024/09/fiberboost_12-150x150.jpg.webp 150w, wp-content/uploads/2024/09/fiberboost_12-768x768.jpg.webp 768w, wp-content/uploads/2024/09/fiberboost_12-50x50.jpg.webp 50w, wp-content/uploads/2024/09/fiberboost_12.jpg.webp 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2024/09/fiberboost_12-300x300.jpg" alt="Nordcanin Fiberboost – prebiotikus rost" loading="lazy" srcset="wp-content/uploads/2024/09/fiberboost_12-300x300.jpg 300w, wp-content/uploads/2024/09/fiberboost_12-100x100.jpg 100w, wp-content/uploads/2024/09/fiberboost_12-600x600.jpg 600w, wp-content/uploads/2024/09/fiberboost_12-64x64.jpg 64w, wp-content/uploads/2024/09/fiberboost_12-1024x1024.jpg 1024w, wp-content/uploads/2024/09/fiberboost_12-150x150.jpg 150w, wp-content/uploads/2024/09/fiberboost_12-768x768.jpg 768w, wp-content/uploads/2024/09/fiberboost_12-50x50.jpg 50w, wp-content/uploads/2024/09/fiberboost_12.jpg 1512w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Immunerősítő</span><span class="dd-vit__name">Nordcanin Fiberboost – prebiotikus rost</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount" aria-hidden="true">5 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span> <span aria-hidden="true">&ndash;</span> <span class="woocommerce-Price-amount amount" aria-hidden="true">9 990&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span><span class="screen-reader-text">Ártartomány: 5 990&nbsp;&#070;&#116; - 9 990&nbsp;&#070;&#116;</span></span><a href="termek/nordcanin-fiberboost-prebiotikus-rost/index.html" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_9465" data-quantity="1" class="button product_type_variable add_to_cart_button wvs-add-to-cart-button wvs_ajax_add_to_cart" data-product_id="9465" data-product_sku="" aria-label="Válasszunk &ldquo;Nordcanin Fiberboost – prebiotikus rost&rdquo; lehetőségek közül" rel="nofollow">Opciók választása</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_9465" class="screen-reader-text">
+		Ennek a terméknek több variációja van. A változatok a termékoldalon választhatók ki	</span>
+</div></li><li class="dd-vit__tile" data-cat="natur-kutyakozmetikum"><a class="dd-vit__link" href="termek/szemkornyekapolo/index.html" aria-label="Megnézem: Ezüstkolloidos Szemkörnyékápoló"><span class="dd-vit__media"><picture decoding="async" class="dd-vit__img wvs-archive-product-image" loading="lazy">
+<source type="image/webp" srcset="wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-300x300.jpg.webp 300w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-100x100.jpg.webp 100w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-600x600.jpg.webp 600w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-64x64.jpg.webp 64w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-150x150.jpg.webp 150w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-768x768.jpg.webp 768w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-50x50.jpg.webp 50w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min.jpg.webp 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+<img decoding="async" width="300" height="300" src="wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-300x300.jpg" alt="Ezüstkolloidos Szemkörnyékápoló" loading="lazy" srcset="wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-300x300.jpg 300w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-100x100.jpg 100w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-600x600.jpg 600w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-64x64.jpg 64w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-150x150.jpg 150w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-768x768.jpg 768w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min-50x50.jpg 50w, wp-content/uploads/2023/01/Eye-Care-Tear-Stain-Cleanser-min.jpg 1000w" sizes="auto, (max-width: 300px) 100vw, 300px"/>
+</picture>
+</span><span class="dd-vit__cat">Kutyaápolás</span><span class="dd-vit__name">Ezüstkolloidos Szemkörnyékápoló</span></a><div class="dd-vit__foot"><span class="dd-vit__price"><span class="woocommerce-Price-amount amount">6 490&nbsp;<span class="woocommerce-Price-currencySymbol">&#070;&#116;</span></span></span><a href="#" aria-describedby="woocommerce_loop_add_to_cart_link_describedby_8187" data-quantity="1" class="button product_type_simple add_to_cart_button ajax_add_to_cart" data-product_id="8187" data-product_sku="00023" aria-label="Kosárba: &ldquo;Ezüstkolloidos Szemkörnyékápoló&rdquo;" rel="nofollow" data-success_message="&ldquo;Ezüstkolloidos Szemkörnyékápoló&rdquo; has been added to your cart" role="button">Kosárba teszem</a>	<span id="woocommerce_loop_add_to_cart_link_describedby_8187" class="screen-reader-text">
+			</span>
+</div></li></ul>
+	</div>
+	<div class="dd-vit__inner">
+		<div class="dd-vit__bar" aria-hidden="true" hidden><span></span></div>
+		<p class="dd-vit__live screen-reader-text" role="status" aria-live="polite"></p>
+	</div>
+</section>
+	
+
+
 
 <div class="wp-block-group alignfull why-section is-layout-flow wp-block-group-is-layout-flow">
 
@@ -1250,6 +2182,7 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 
 
 
+
 <div style="position:absolute;margin:-1px;padding:0;height:1px;width:1px;overflow:hidden;clip-path:inset(50%);border:0;word-wrap:normal !important;"><p id="a11y-speak-intro-text" class="a11y-speak-intro-text" hidden>Értesítések</p><div id="a11y-speak-assertive" class="a11y-speak-region" aria-live="assertive" aria-relevant="additions text" aria-atomic="true"></div><div id="a11y-speak-polite" class="a11y-speak-region" aria-live="polite" aria-relevant="additions text" aria-atomic="true"></div></div>
     
 	<!--copyscapeskip-->
@@ -1366,6 +2299,96 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 	<!-- #moove_gdpr_cookie_modal -->
 	<!--/copyscapeskip-->
 
+<script id="dd-vitrin-js">
+/* Főoldali vitrin: nyilak, húzással görgetés, billentyűzet, kategória-szűrő, haladásjelző.
+   Nem küld hálózati kérést, nem tárol semmit. Szkript nélkül is használható: a sor ilyenkor egyszerűen görgethető. */
+(function () {
+	'use strict';
+
+	var d = document, w = window;
+	var root = d.getElementById('dd-vitrin');
+	if (!root) { return; }
+
+	var rail = root.querySelector('.dd-vit__rail'), track = root.querySelector('.dd-vit__track');
+	var ctrl = root.querySelector('.dd-vit__ctrl'), chips = root.querySelector('.dd-vit__chips');
+	var bar = root.querySelector('.dd-vit__bar'), fill = bar && bar.querySelector('span'), live = root.querySelector('.dd-vit__live');
+	var prev = root.querySelector('[data-dir="-1"]'), next = root.querySelector('[data-dir="1"]');
+	var reduce = !!(w.matchMedia && w.matchMedia('(prefers-reduced-motion: reduce)').matches);
+	var tick = 0;
+
+	// a vezérlők csak szkripttel működnek, ezért csak itt jelennek meg
+	if (ctrl) { ctrl.hidden = false; }
+	if (chips) { chips.hidden = false; }
+	if (bar) { bar.hidden = false; }
+
+	function step() { var t = track.querySelector('.dd-vit__tile:not([hidden])'); return t ? t.getBoundingClientRect().width + 18 : 280; }
+
+	function update() {
+		tick = 0;
+		var max = rail.scrollWidth - rail.clientWidth, x = rail.scrollLeft;
+		if (prev) { prev.disabled = x <= 2; }
+		if (next) { next.disabled = x >= max - 2; }
+		if (fill) {
+			var vis = max > 0 ? rail.clientWidth / rail.scrollWidth : 1;
+			fill.style.width = Math.max(8, vis * 100) + '%';
+			fill.style.transform = 'translateX(' + (max > 0 ? (x / max) * ((1 - vis) / vis) * 100 : 0) + '%)';
+		}
+	}
+
+	function schedule() { if (!tick) { tick = w.requestAnimationFrame(update); } }
+
+	function go(dir) { rail.scrollBy({ left: dir * Math.max(step(), rail.clientWidth * 0.8), behavior: reduce ? 'auto' : 'smooth' }); }
+
+	if (prev) { prev.addEventListener('click', function () { go(-1); }); }
+	if (next) { next.addEventListener('click', function () { go(1); }); }
+	rail.addEventListener('scroll', schedule, { passive: true });
+	w.addEventListener('resize', schedule);
+
+	// billentyűzet: nyilak a fókuszált soron
+	rail.addEventListener('keydown', function (e) {
+		if (e.key === 'ArrowRight') { e.preventDefault(); go(1); } else if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+	});
+
+	// húzás egérrel (érintőképernyőn a böngésző saját görgetése működik)
+	var drag = null, moved = 0;
+	rail.addEventListener('pointerdown', function (e) {
+		if (e.pointerType !== 'mouse' || e.button !== 0) { return; }
+		drag = { x: e.clientX, left: rail.scrollLeft }; moved = 0;
+	});
+	w.addEventListener('pointermove', function (e) {
+		if (!drag) { return; }
+		var dx = e.clientX - drag.x;
+		moved = Math.max(moved, Math.abs(dx));
+		if (moved > 5) { rail.classList.add('is-dragging'); rail.scrollLeft = drag.left - dx; }
+	});
+	function endDrag() { if (!drag) { return; } drag = null; w.setTimeout(function () { rail.classList.remove('is-dragging'); }, 0); }
+	w.addEventListener('pointerup', endDrag);
+	w.addEventListener('pointercancel', endDrag);
+	// húzás után ne nyíljon meg a termék
+	rail.addEventListener('click', function (e) { if (moved > 5) { e.preventDefault(); e.stopPropagation(); moved = 0; } }, true);
+
+	// kategória-szűrő
+	if (chips) {
+		chips.addEventListener('click', function (e) {
+			var b = e.target.closest('.dd-vit__chip');
+			if (!b) { return; }
+			var cat = b.getAttribute('data-cat'), n = 0;
+			[].forEach.call(chips.querySelectorAll('.dd-vit__chip'), function (c) { c.setAttribute('aria-pressed', c === b ? 'true' : 'false'); });
+			[].forEach.call(track.querySelectorAll('.dd-vit__tile'), function (t) {
+				var show = !cat || t.getAttribute('data-cat') === cat;
+				t.hidden = !show;
+				if (show) { n++; }
+			});
+			rail.scrollTo({ left: 0, behavior: 'auto' });
+			update();
+			if (live) { live.textContent = n + ' termék látható.'; }
+		});
+	}
+
+	update();
+})();
+
+</script>
 <div style="background:#083531;color:#FAF7F2;font:12px/1.4 Inter,Arial,sans-serif;padding:10px 16px;text-align:center">Előnézet — nem éles oldal, a linkek részben működnek</div>
 <script>
 (function () {
@@ -1423,8 +2446,6 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 
 	if (reduce) { return; }
 
-	function rand(i, k) { return Math.abs((Math.sin((i + 1) * 12.9898 + k * 78.233) * 43758.5453) % 1); }
-
 	/* A hangulat-réteg a tartalom mögött van: ehhez az oldal krém hátterével azonos színű szakaszok (fix/ragadós elemek kivételével)
 	   átlátszóvá válnak. Látványra semmi nem változik, a kártyák, képek és a fejléc/lábléc saját háttere megmarad. */
 	function clearBackdrops() {
@@ -1443,34 +2464,30 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 		}
 	}
 
-	/* ---------- 1. Évszakos hangulat-réteg: lassú, jól látható részecskék és fény a bemutatkozó oldalak háttérében ---------- */
+	/* ---------- 1. Hangulat-réteg: évszak + időjárás (fx.js), a bemutatkozó oldalak háttérében ---------- */
+	var ambientTries = 0;
+
 	function ambient() {
-		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-ambient')) { return; }
+		if (!h.hasAttribute('data-dd-ambient') || d.querySelector('.dd-fx--ambient')) { return; }
 
 		var conn = navigator.connection;
 		if (conn && conn.saveData) { return; }
 		if (navigator.deviceMemory && navigator.deviceMemory <= 2) { return; }
 
-		var box = d.createElement('div');
-		box.className = 'dd-ambient';
-		box.setAttribute('aria-hidden', 'true');
+		// a motor (fx.js) késleltetve töltődik: ha még nincs kész, röviden újrapróbáljuk
+		if (!w.DDFx) { if (ambientTries++ < 25) { w.setTimeout(ambient, 160); } return; }
 
-		var n = w.innerWidth < 700 ? 12 : 20, out = '';
-		for (var i = 0; i < n; i++) {
-			var t = (3.6 + rand(i, 3) * 2.8).toFixed(1);
-			out += '<i class="dd-p" style="--x:' + (rand(i, 1) * 96 + 2).toFixed(1) + '%;--s:' + (8 + Math.round(rand(i, 2) * 10)) +
-				'px;--t:' + t + 's;--d:-' + (rand(i, 4) * t * 3.4).toFixed(1) + 's;--dx:' + Math.round((rand(i, 5) - 0.5) * 14) + 'vw"></i>';
-		}
-		box.innerHTML = out;
-		d.body.appendChild(box);
+		var cv = d.createElement('canvas');
+		cv.className = 'dd-fx dd-fx--ambient';
+		cv.setAttribute('aria-hidden', 'true');
+		d.body.appendChild(cv);
+		w.DDFx.start(cv);
 
 		clearBackdrops();
 		h.classList.add('dd-ambient-on');
 
-		// Ha a lap nem látszik, a részecskék megállnak (nem pazarolunk energiát)
-		d.addEventListener('visibilitychange', function () {
-			box.classList.toggle('dd-paused', d.hidden);
-		});
+		// hely szerinti időjárás: csak ha a látogató már engedélyezte a helymeghatározást, vagy rákattint a gombra
+		w.DDFx.initWeather();
 	}
 
 	/* ---------- 2. Görgetéses megjelenés: csak a képernyőn kívüli elemekre ---------- */
@@ -1549,8 +2566,8 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 })();
 
 </script>
-<style id="dd-demo-css">body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}.dd-demo__toast{position:fixed;left:50%;bottom:88px;transform:translateX(-50%);z-index:2147483201;box-sizing:border-box;width:min(92vw,420px);padding:12px 14px;border-radius:12px;background:#FAF7F2;color:#083531;border:1px solid #2DA89E;font:500 14px/1.4 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)}.dd-demo__toast[hidden]{display:none}</style>
-<div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak és betöltő"><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="index.html">Betöltő újra</button><span class="dd-demo__note" id="dd-demo-note" hidden><span id="dd-demo-msg"></span> <button type="button" data-force hidden>Animációk megmutatása</button><button type="button" data-unforce hidden>Animációk kikapcsolása</button></span></div>
+<style id="dd-demo-css">.dd-demo{display:none!important}html.dd-demo-on .dd-demo{display:flex!important}html.dd-demo-on body{padding-bottom:70px}.dd-demo{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:2147483200;display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center;max-width:calc(100vw - 16px);padding:8px 10px;border-radius:14px;background:rgba(8,53,49,.95);color:#FAF7F2;font:500 12px/1.2 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.25)}.dd-demo button{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:6px 10px;cursor:pointer}.dd-demo button[aria-pressed="true"]{background:#E89A7B;border-color:#E89A7B;color:#083531;font-weight:600}.dd-demo__note{flex-basis:100%;text-align:center;opacity:.92}.dd-demo .dd-demo__tog{display:none;font-weight:600}.dd-demo.is-closed>:not(.dd-demo__tog){display:none!important}@media (max-width:700px){.dd-demo .dd-demo__tog{display:inline-flex}.dd-demo{bottom:8px;max-width:calc(100vw - 16px)}.dd-demo.is-closed{padding:6px 8px}}.dd-demo__wx{display:inline-flex;align-items:center;gap:6px}.dd-demo__wx[hidden]{display:none}.dd-demo select{font:inherit;color:#FAF7F2;background:transparent;border:1px solid rgba(250,247,242,.45);border-radius:999px;padding:5px 8px;max-width:48vw}.dd-demo select option{color:#083531;background:#FAF7F2}html.dd-demo-on .dd-demo__toast{bottom:88px}.dd-demo__toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:2147483201;box-sizing:border-box;width:min(92vw,420px);padding:12px 14px;border-radius:12px;background:#FAF7F2;color:#083531;border:1px solid #2DA89E;font:500 14px/1.4 Inter,Arial,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,.22)}.dd-demo__toast[hidden]{display:none}</style>
+<div class="dd-demo" id="dd-demo" role="group" aria-label="Előnézeti vezérlők: évszak, időjárás és betöltő"><button type="button" class="dd-demo__tog" data-tog aria-expanded="true">Bezár ▾</button><span>Évszak:</span><button type="button" data-s="spring">Tavasz</button><button type="button" data-s="summer">Nyár</button><button type="button" data-s="autumn">Ősz</button><button type="button" data-s="winter">Tél</button><button type="button" data-replay="index.html">Betöltő újra</button><label class="dd-demo__wx" hidden title="Az éles oldalon a látogató helye szerinti valós időjárás látszik (szerver kell hozzá); itt az összes időjárást kipróbálhatod."><span>Időjárás:</span><select data-wx aria-label="Időjárás kipróbálása"><option value="">Automatikus (évszak szerint)</option><option value="clear">Napos</option><option value="partly">Részben felhős</option><option value="clouds">Felhős</option><option value="fog">Köd</option><option value="drizzle">Szitálás</option><option value="rain">Eső</option><option value="downpour">Felhőszakadás</option><option value="storm">Zivatar, villámlás</option><option value="snow">Havazás</option><option value="blizzard">Hóvihar</option><option value="sleet">Ónos eső</option><option value="wind">Szeles</option><option value="night">Éjszaka</option></select></label><span class="dd-demo__note" id="dd-demo-note" hidden><span id="dd-demo-msg"></span> <button type="button" data-force hidden>Animációk megmutatása</button><button type="button" data-unforce hidden>Animációk kikapcsolása</button></span></div>
 <div class="dd-demo__toast" id="dd-demo-toast" role="status" aria-live="polite" hidden></div>
 <script id="dd-demo-js">
 (function () {
@@ -1558,6 +2575,17 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
   if (!bar) { return; }
   function mark() { var s = h.getAttribute('data-season'); [].forEach.call(bar.querySelectorAll('[data-s]'), function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-s') === s ? 'true' : 'false'); }); }
   mark();
+  // telefonon alapból összecsukva (kis "Effektek" gomb), hogy ne takarja a tartalmat
+  var tog = bar.querySelector('[data-tog]');
+  function setClosed(c) { bar.classList.toggle('is-closed', c); if (tog) { tog.setAttribute('aria-expanded', c ? 'false' : 'true'); tog.textContent = c ? 'Effektek ▴' : 'Bezár ▾'; } }
+  if (window.matchMedia && matchMedia('(max-width: 700px)').matches) { setClosed(true); }
+  // időjárás-választó: csak ott, ahol az effekt-motor is fut
+  var wxl = bar.querySelector('.dd-demo__wx'), wxs = bar.querySelector('[data-wx]');
+  if (wxl && wxs && window.DDFx) {
+    wxl.hidden = false;
+    var cur = window.DDFx.current(); if (cur && cur !== 'live') { wxs.value = cur; }
+    wxs.addEventListener('change', function () { window.DDFx.set(wxs.value || null); });
+  }
   if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) {
     var note = d.getElementById('dd-demo-note'), msg = d.getElementById('dd-demo-msg');
     note.hidden = false;
@@ -1566,7 +2594,8 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
   }
   bar.addEventListener('click', function (e) {
     var b = e.target.closest('button'); if (!b) { return; }
-    if (b.hasAttribute('data-s')) { if (window.DDMotion) { window.DDMotion.season(b.getAttribute('data-s')); } mark(); }
+    if (b.hasAttribute('data-tog')) { setClosed(!bar.classList.contains('is-closed')); }
+    else if (b.hasAttribute('data-s')) { if (window.DDMotion) { window.DDMotion.season(b.getAttribute('data-s')); } mark(); }
     else if (b.hasAttribute('data-replay')) { if (window.DDMotion) { window.DDMotion.replay(b.getAttribute('data-replay') + '?loader=1'); } }
     else if (b.hasAttribute('data-force')) { try { sessionStorage.removeItem('ddDemoOff'); sessionStorage.setItem('ddMotion', 'on'); } catch (x) {} location.reload(); }
     else if (b.hasAttribute('data-unforce')) { try { sessionStorage.setItem('ddDemoOff', '1'); sessionStorage.removeItem('ddMotion'); } catch (x) {} location.reload(); }
@@ -1591,5 +2620,5 @@ h1:where(.wp-block-heading).has-background,h2:where(.wp-block-heading).has-backg
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 10:04:36 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-01 11:10:26 -->
 <!-- QUIC.cloud CCSS in queue -->
