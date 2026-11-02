@@ -700,7 +700,7 @@ tr.dd-prev-in{animation:none}
 		
 		
 		
-		
+		<tr class="dd-shipping-hint"><th>Szállítás</th><td data-title="Szállítás">Add meg a címedet, és megjelennek a szállítási módok és a díjak.</td></tr>
 		<tr class="order-total">
 			<th>Összeg</th>
 			<td><strong><span class="woocommerce-Price-amount amount"><bdi>22 570&nbsp;<span class="woocommerce-Price-currencySymbol">&#70;&#116;</span></bdi></span></strong> </td>
@@ -1227,8 +1227,12 @@ tr.dd-prev-in{animation:none}
     return r ? r.value : data.opts[0].value;
   }
 
+  // A valódi pénztár a cím megadásáig "Add meg a címedet…" jelzést mutat (téma: woocommerce_review_order_before_order_total); a szállítási
+  // módok megjelenésekor ez a sor eltűnik, mint a valódi pénztáron
+  var hintRow = d.querySelector('tr.dd-shipping-hint');
   var row = null, note = null;
   function show() {
+    if (hintRow) { hintRow.style.display = 'none'; }
     row = d.createElement('tr');
     row.className = 'woocommerce-shipping-totals shipping dd-prev-in';
     var td = d.createElement('td');
@@ -1242,6 +1246,7 @@ tr.dd-prev-in{animation:none}
     row.addEventListener('change', function () { update(); });
   }
   function hide() {
+    if (hintRow) { hintRow.style.display = ''; }
     if (row && row.parentNode) { row.parentNode.removeChild(row); }
     row = null; note = null;
   }
@@ -1623,5 +1628,5 @@ tr.dd-prev-in{animation:none}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-02 13:15:01 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-02 22:24:34 -->
 <!-- QUIC.cloud CCSS in queue -->
