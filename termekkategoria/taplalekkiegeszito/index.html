@@ -322,7 +322,7 @@
 		this.dark = !!(opts && opts.dark);
 		this.S = sprites(this.dark);
 		this.P = { rain: [], snow: [], crystal: [], petal: [], leaf: [], seed: [], mote: [], firefly: [], spark: [], cloud: [], splash: [] };
-		this.t = 0; this.q = 1; this.res = 1; this.acc = 0; this.n = 0; this.first = true;
+		this.t = 0; this.q = 1; this.res = 1; this.acc = 0; this.n = 0; this.first = true; this.warm = 24;
 		this.fog = []; this.bolt = null; this.nextBolt = 5 + rnd() * 5;
 		this.L = { sun: 0, moon: 0, rays: 0, fog: 0, dark: 0 };
 		this.wind = { dir: 1, base: 0.2 };
@@ -411,6 +411,7 @@
 	}
 
 	Fx.prototype.frame = function (dt) {
+		var raw = dt;
 		dt = clamp(dt, 0.001, 0.05);
 		var I = this, cx = I.cx, W = I.w, H = I.h, p = I.plan, S = I.S, t = (I.t += dt), L = I.L, P = I.P, i, o, n;
 		var sea = I.sc.season, k = min(1, dt * 1.6);
@@ -418,8 +419,10 @@
 		// ha a vászon mérete közben megváltozott (pl. rejtett fülről előhozott oldal), újra méretezünk
 		if ((I.cv.clientWidth && I.cv.clientWidth !== I.w) || (I.cv.clientHeight && I.cv.clientHeight !== I.h)) { I.size(); W = I.w; H = I.h; p = I.plan; }
 
-		// teljesítmény-felügyelet: ha lassú a gép, csökkentjük a darabszámot
-		I.acc += dt; I.n++;
+		// teljesítmény-felügyelet: ha lassú a gép, csökkentjük a darabszámot.
+		// Nem számít bele az indulás / a fülről való visszatérés első képkockái (a böngésző ilyenkor újra rajzolja az oldalt, ezt nem a gép
+		// lassúsága okozza), és a 0,12 s-nál hosszabb szünet sem (megszakadt a rajzolás, nem lassú a gép).
+		if (I.warm > 0) { I.warm--; } else if (raw < 0.12) { I.acc += dt; I.n++; }
 		if (I.n >= 90) {
 			var avg = I.acc / I.n; I.acc = 0; I.n = 0;
 			if (avg > 1 / 40) {
@@ -622,7 +625,7 @@
 	Fx.prototype.start = function () {
 		var I = this;
 		if (I.running) { return; }
-		I.running = true; I.last = 0;
+		I.running = true; I.last = 0; I.warm = 24; I.acc = 0; I.n = 0;
 		function loop(ts) {
 			if (!I.running) { return; }
 			var dt = I.last ? (ts - I.last) / 1000 : 0.016;
@@ -2376,5 +2379,5 @@ html.dds-open{overflow:hidden}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-02 12:03:10 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-02 12:41:19 -->
 <!-- QUIC.cloud CCSS in queue -->
