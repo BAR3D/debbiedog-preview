@@ -1911,8 +1911,9 @@ html.dds-open{overflow:hidden}
 
 </script>
 <script id="dd-motion">
-/* Finom mozgás: évszakos hangulat-réteg, görgetéses megjelenés, kosár-jelzés.
-   Nem küld hálózati kérést, nem tárol személyes adatot (csak a böngésző sessionStorage-ában az évszak-kipróbálást).
+/* Finom mozgás: évszakos hangulat-réteg, görgetéses megjelenés, kosár-jelzés, a lusta képek előmelegítése.
+   Külső (harmadik fél) felé nem küld kérést, nem tárol személyes adatot (csak a böngésző sessionStorage-ában az évszak-kipróbálást);
+   az egyetlen saját kérése a betöltés utáni kép-előmelegítés (a saját képeinket húzza be előre).
    Csökkentett mozgásnál (prefers-reduced-motion) semmit nem csinál. */
 (function () {
 	'use strict';
@@ -1933,6 +1934,42 @@ html.dds-open{overflow:hidden}
 			w.location.href = url || (w.location.pathname + '?loader=1');
 		}
 	};
+
+	/* ---------- 0. Képek előmelegítése (csökkentett mozgásnál is fut: nem mozgás, hanem betöltés) ----------
+	   A "lazy" képek alapból csak görgetéskor kezdenek letöltődni és dekódolódni, ezért az első görgetésnél a képek egyenként érkeznek, és
+	   pillanatnyi akadást okoznak (a másodiknál, amikor már a memóriában vannak, nincs). Amint az oldal betöltődött és a böngésző tétlen,
+	   a tartalmi képeket sorban, három párhuzamos kéréssel előre letöltjük és dekódoljuk. Csak a saját képeinket érinti (külső kérés nincs),
+	   és nem fut adatspóroló módban, lassú (2G) kapcsolaton vagy kevés (≤2 GB) memóriájú eszközön. */
+	function warmImages() {
+		var conn = navigator.connection;
+		if (conn && (conn.saveData || /(^|-)2g$/.test(conn.effectiveType || ''))) { return; }
+		if (navigator.deviceMemory && navigator.deviceMemory <= 2) { return; }
+		if (!w.Promise) { return; }
+
+		var list = [].slice.call(d.querySelectorAll('main img[loading="lazy"], #main img[loading="lazy"]')),
+			i = 0, busy = 0, MAX = 60, PAR = 3;
+		if (!list.length) { return; }
+
+		function idle(fn) {
+			if ('requestIdleCallback' in w) { w.requestIdleCallback(fn, { timeout: 400 }); } else { w.setTimeout(fn, 80); }
+		}
+		function done() { busy--; idle(pump); }
+		function pump() {
+			while (busy < PAR && i < list.length && i < MAX) {
+				var im = list[i++];
+				busy++;
+				im.loading = 'eager';
+				(im.decode ? im.decode() : Promise.resolve()).then(done, done);
+			}
+		}
+
+		pump();
+	}
+
+	function warmStart() {
+		if ('requestIdleCallback' in w) { w.requestIdleCallback(warmImages, { timeout: 1200 }); } else { w.setTimeout(warmImages, 300); }
+	}
+	if (d.readyState === 'complete') { warmStart(); } else { w.addEventListener('load', warmStart); }
 
 	if (reduce) { return; }
 
@@ -2110,5 +2147,5 @@ html.dds-open{overflow:hidden}
 </html>
 
 
-<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-02 12:45:12 -->
+<!-- Page supported by LiteSpeed Cache 7.8.1 on 2026-11-02 13:18:41 -->
 <!-- QUIC.cloud CCSS in queue -->
